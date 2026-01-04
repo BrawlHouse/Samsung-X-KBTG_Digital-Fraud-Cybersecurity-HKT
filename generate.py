@@ -262,7 +262,7 @@ class CallMonitorService : Service() {
         val notification: Notification = NotificationCompat.Builder(this, "risk_service")
             .setContentTitle("RiskGuard Active")
             .setContentText("Monitoring calls for safety...")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .build()
         startForeground(1, notification)
     }

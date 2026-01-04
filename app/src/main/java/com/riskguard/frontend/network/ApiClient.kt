@@ -4,11 +4,16 @@ import com.riskguard.frontend.config.AppConfig
 import com.riskguard.frontend.model.RiskResult
 
 object ApiClient {
-    fun checkRisk(callback: (RiskResult) -> Unit) {
+
+    // ส่ง answers จาก form (Map<String,String>) เข้า evaluateRisk
+    fun checkRisk(
+        answers: Map<String,String>,
+        callback: (RiskResult) -> Unit
+    ) {
         if (AppConfig.IS_MOCK_MODE) {
-            MockApi.evaluateRisk(callback)
+            MockApi.evaluateRisk(answers, callback)
         } else {
-            // TODO: Connect Node.js here
+            // TODO: ต่อ Node.js จริง
         }
     }
 }
