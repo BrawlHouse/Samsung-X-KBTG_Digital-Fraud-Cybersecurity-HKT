@@ -3,7 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { sequelize } = require('./models');
+
+
 const userRoutes = require('./routes/userRoutes');
+const familyRoutes = require('./routes/familyRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +22,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/users', userRoutes);
+app.use('/family', familyRoutes)
 
 sequelize.sync({ force: false }) // force: true จะลบตารางเก่าทิ้งแล้วสร้างใหม่ (ระวังข้อมูลหาย)
     .then(() => {
