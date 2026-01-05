@@ -17,6 +17,12 @@ const User = sequelize.define('User', {
         type: DataTypes.ENUM('parent', 'child'),
         allowNull: false
     },
+    // ใช้เก็บ Token ยาวๆ ที่ได้จาก Firebase เอาไว้ยิง Notification
+    fcm_token: {
+        type: DataTypes.STRING, 
+        allowNull: true,      // ต้องยอมให้เป็น Null ได้ เพราะตอนสมัครสมาชิกอาจจะยังไม่ได้ Token
+        defaultValue: null
+    }
     // Foreign Keys จะถูกจัดการโดย Associations ด้านล่าง
 });
 
