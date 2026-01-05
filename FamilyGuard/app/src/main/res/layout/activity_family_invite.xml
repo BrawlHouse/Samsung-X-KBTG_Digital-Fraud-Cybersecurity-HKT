@@ -28,7 +28,7 @@
             android:layout_height="200dp"
             android:layout_marginTop="24dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/img_family_connect" /> <!-- Placeholder -->
+            android:src="@drawable/ic_launcher_background" /> <!-- Placeholder -->
 
         <!-- Title -->
         <TextView
@@ -57,6 +57,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="24dp"
+            android:backgroundTint="#197fe6"
             android:text="Create a New Family"
             android:textAllCaps="false"
             android:textSize="16sp"
@@ -127,7 +128,10 @@
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusTopStart="12dp"
                     app:boxStrokeWidth="0dp"
-                    app:hintEnabled="false">
+                    app:hintEnabled="false"
+                    app:endIconDrawable="@drawable/ic_key"
+                    app:endIconTint="#9ca3af"
+                    app:endIconMode="custom">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:layout_width="match_parent"

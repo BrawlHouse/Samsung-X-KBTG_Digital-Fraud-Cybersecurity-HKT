@@ -35,14 +35,24 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvAppTitle" />
 
-        <ImageButton
+        <FrameLayout
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_settings"
+            android:background="@drawable/bg_rounded_full"
+            android:backgroundTint="#19197fe6"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_settings"
+                android:tint="@color/primary" />
+        </FrameLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -64,27 +74,29 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="#ffffff"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:cardBackgroundColor="#ffffff">
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="24dp"
-                    android:gravity="center_vertical">
+                    android:padding="24dp">
 
                     <FrameLayout
                         android:layout_width="64dp"
                         android:layout_height="64dp"
-                        android:background="@drawable/bg_circle_green_light">
+                        android:background="@drawable/bg_rounded_full"
+                        android:backgroundTint="#1a16a34a">
+
                         <ImageView
                             android:layout_width="32dp"
                             android:layout_height="32dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_shield_check"
-                            app:tint="#16a34a" />
+                            android:src="@drawable/ic_shield"
+                            app:tint="@color/green" />
                     </FrameLayout>
 
                     <LinearLayout
@@ -114,44 +126,41 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 android:layout_marginStart="8dp"
+                android:layout_marginBottom="16dp"
                 android:text="Family Members"
                 android:textColor="#0f172a"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
             <!-- Sarah Jenkins (Safe) -->
-            <include layout="@layout/item_family_member_placeholder_1" /> 
-            
-            <!-- I will inline the card content here instead of include for now as I can't guarantee the include exists yet -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#ffffff"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="1dp"
-                app:cardBackgroundColor="#ffffff">
+                app:cardElevation="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="20dp"
-                    android:gravity="center_vertical">
-                    
+                    android:padding="20dp">
+
                     <!-- Avatar -->
                     <ImageView
                         android:layout_width="80dp"
                         android:layout_height="80dp"
-                        android:src="@drawable/avatar_placeholder_1" 
-                        android:background="@drawable/bg_circle_avatar" /> 
+                        android:background="@drawable/bg_rounded_full_border_light"
+                        android:src="@drawable/avatar_placeholder_1" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginStart="20dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
@@ -161,11 +170,12 @@
                             android:textColor="#0f172a"
                             android:textSize="18sp"
                             android:textStyle="bold" />
-                        
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="#f1f5f9"
+                            android:background="@drawable/bg_rounded_lg"
+                            android:backgroundTint="#f1f5f9"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="4dp"
                             android:text="Daughter"
@@ -177,13 +187,24 @@
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:gravity="center">
-                        <ImageView
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <FrameLayout
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            android:src="@drawable/ic_check_circle"
-                            app:tint="#16a34a" />
+                            android:background="@drawable/bg_rounded_full"
+                            android:backgroundTint="#1a16a34a">
+
+                            <ImageView
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check_circle"
+                                app:tint="#16a34a" />
+                        </FrameLayout>
+
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -194,41 +215,42 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-            
+
             <!-- Mark Jenkins (Warning) -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#ffffff"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="1dp"
-                app:cardBackgroundColor="#ffffff">
-                
+                app:cardElevation="1dp">
+
                 <!-- Border logic is hard in CardView, usually stick to a wrapper or View. I'll skip the left-border warning styling for simplicity or use a View inside. -->
                 <View
-                     android:layout_width="8dp"
-                     android:layout_height="match_parent"
-                     android:background="#f59e0b"
-                     android:layout_gravity="start"/>
+                    android:layout_width="8dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="start"
+                    android:background="#f59e0b" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:padding="20dp"
-                    android:paddingStart="28dp"
-                    android:gravity="center_vertical">
-                    
+                    android:paddingStart="28dp">
+
                     <ImageView
                         android:layout_width="80dp"
                         android:layout_height="80dp"
-                        android:src="@drawable/avatar_placeholder_2" /> 
+                        android:background="@drawable/bg_rounded_full_border_light"
+                        android:src="@drawable/avatar_placeholder_2" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginStart="20dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
@@ -238,11 +260,12 @@
                             android:textColor="#0f172a"
                             android:textSize="18sp"
                             android:textStyle="bold" />
-                        
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="#f1f5f9"
+                            android:background="@drawable/bg_rounded_lg"
+                            android:backgroundTint="#f1f5f9"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="4dp"
                             android:text="Father"
@@ -254,13 +277,23 @@
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:gravity="center">
-                        <ImageView
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <FrameLayout
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            android:src="@drawable/ic_warning"
-                            app:tint="#f59e0b" />
+                            android:background="@drawable/bg_rounded_full"
+                            android:backgroundTint="#1af59e0b">
+
+                            <ImageView
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_warning"
+                                app:tint="#f59e0b" />
+                        </FrameLayout>
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -273,31 +306,32 @@
             </androidx.cardview.widget.CardView>
 
             <!-- Martha Jenkins (Safe) -->
-             <androidx.cardview.widget.CardView
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#ffffff"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="1dp"
-                app:cardBackgroundColor="#ffffff">
+                app:cardElevation="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="20dp"
-                    android:gravity="center_vertical">
-                    
+                    android:padding="20dp">
+
                     <ImageView
                         android:layout_width="80dp"
                         android:layout_height="80dp"
-                        android:src="@drawable/avatar_placeholder_3" /> 
+                        android:background="@drawable/bg_rounded_full_border_light"
+                        android:src="@drawable/avatar_placeholder_3" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginStart="20dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
 
                         <TextView
@@ -307,11 +341,12 @@
                             android:textColor="#0f172a"
                             android:textSize="18sp"
                             android:textStyle="bold" />
-                        
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="#f1f5f9"
+                            android:background="@drawable/bg_rounded_lg"
+                            android:backgroundTint="#f1f5f9"
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="4dp"
                             android:text="Mother"
@@ -323,13 +358,23 @@
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:gravity="center">
-                        <ImageView
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <FrameLayout
                             android:layout_width="48dp"
                             android:layout_height="48dp"
-                            android:src="@drawable/ic_check_circle"
-                            app:tint="#16a34a" />
+                            android:background="@drawable/bg_rounded_full"
+                            android:backgroundTint="#1a16a34a">
+
+                            <ImageView
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_check_circle"
+                                app:tint="#16a34a" />
+                        </FrameLayout>
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -347,16 +392,15 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 android:text="Add Family Member"
-                android:textSize="18sp"
                 android:textColor="#64748b"
+                android:textSize="18sp"
+                app:backgroundTint="#00FFFFFF"
+                app:cornerRadius="12dp"
                 app:icon="@drawable/ic_add_circle"
                 app:iconTint="#64748b"
-                app:backgroundTint="#00FFFFFF"
                 app:strokeColor="#cbd5e1"
-                app:strokeWidth="2dp"
-                app:cornerRadius="12dp"
-                 /> <!-- Dashed border is complex in xml button, solid for now or custom drawable -->
-            
+                app:strokeWidth="2dp" /> <!-- Dashed border is complex in xml button, solid for now or custom drawable -->
+
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
