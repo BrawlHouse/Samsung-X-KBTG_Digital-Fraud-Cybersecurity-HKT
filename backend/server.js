@@ -4,7 +4,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const { sequelize } = require('./models');
 const swaggerUi = require('swagger-ui-express');
-const swaggerSpecs = require('./config/swagger'); // Import ไฟล์ config ที่เพิ่งสร้าง
+const swaggerSpecs = require('./config/swagger'); 
 
 const userRoutes = require('./routes/userRoutes');
 const familyRoutes = require('./routes/familyRoutes');

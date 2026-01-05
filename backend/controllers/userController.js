@@ -1,59 +1,118 @@
-const { User, Device, sequelize } = require('../models');
+const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken');
+const { User, Device, sequelize } = require('../models');
 
 
 exports.register = async (req, res) => {
-    const t = await sequelize.transaction();
-
+    // เริ่ม Transaction เพื่อความชัวร์ (ถ้าพังให้ Rollback หมด)
+    const t = await sequelize.transaction(); 
+    
     try {
-        const { nickname, device_id, role } = req.body;
+        const { nickname, email, password, role, device_id, bank_account_number } = req.body;
 
-        if (!nickname || !device_id || !role) {
-            return res.status(400).json({ error: 'Please provide nickname, device_id, and role' });
+        // 1. Validate Input
+        if (!email || !password || !nickname || !role) {
+            return res.status(400).json({ error: 'Please provide all required fields' });
         }
 
-        const [device] = await Device.findOrCreate({
-            where: { device_id: device_id },
-            defaults: { device_id: device_id },
-            transaction: t
+        // 2. Check duplicate email
+        const existingUser = await User.findOne({ where: { email }, transaction: t });
+        if (existingUser) {
+            await t.rollback(); // ยกเลิก Transaction
+            return res.status(400).json({ error: 'Email already exists' });
+        }
+        
+        if (device_id) {
+            await Device.findOrCreate({
+                where: { device_id: device_id },
+                defaults: { 
+                    device_id: device_id,
+                    register_at: new Date()
+                },
+                transaction: t
+            });
+        }
+
+        // 3. Hash Password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // 4. Create User
+        const newUser = await User.create({
+            nickname,
+            email,
+            password: hashedPassword,
+            role,
+            device_id: device_id || null, // ถ้าไม่มีส่งมาให้เป็น null
+            bank_account_number
+        }, { transaction: t });
+
+        // บันทึกทุกอย่างลง DB จริง
+        await t.commit();
+
+        res.status(201).json({ 
+            message: 'User registered successfully',
+            user: {
+                user_id: newUser.user_id,
+                nickname: newUser.nickname,
+                email: newUser.email,
+                role: newUser.role
+            }
         });
 
-        let user = await User.findOne({ where: { device_id: device_id }, transaction: t });
+    } catch (error) {
+        await t.rollback(); // ย้อนกลับถ้า error
+        console.error(error); // log ดู error ใน terminal
+        res.status(500).json({ error: 'Registration failed', details: error.message });
+    }
+};
 
+
+exports.login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // 1. หา User จาก Email
+        const user = await User.findOne({ where: { email } });
         if (!user) {
-            user = await User.create({ nickname, role, device_id }, { transaction: t });
-        } else {
-            user.nickname = nickname;
-            user.role = role;
-            await user.save({ transaction: t });
+            return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        await t.commit();
-        
+        // 2. ตรวจสอบรหัสผ่าน (เทียบสิ่งที่พิมพ์มา กับ Hash ใน DB)
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // 3. รหัสถูก -> แจก Token
         const token = jwt.sign(
-            { user_id: user.user_id, role: user.role, family_id: user.family_id },
+            { 
+                user_id: user.user_id, 
+                role: user.role, 
+                family_id: user.family_id 
+            },
             process.env.JWT_SECRET,
             { expiresIn: '365d' }
         );
 
-        res.status(201).json({
-            message: 'User registered successfully',
+        res.json({
+            message: 'Login successful',
+            token,
             user: {
                 user_id: user.user_id,
+                email: user.email,
                 nickname: user.nickname,
                 role: user.role,
                 family_id: user.family_id,
-                device_id: user.device_id
-            },
-            token: token
+                bank_account_number: user.bank_account_number
+            }
         });
 
     } catch (error) {
-        await t.rollback();
-        console.error(error);
-        res.status(500).json({ error: 'Registration failed', details: error.message });
+        res.status(500).json({ error: 'Login failed', details: error.message });
     }
 };
+
+
 
 // (NEW) ลบ User ออกจากระบบ (DELETE /users)
 exports.deleteUser = async (req, res) => {
@@ -83,29 +142,18 @@ exports.deleteUser = async (req, res) => {
 
 exports.getUserInfo = async (req, res) => {
     try {
-        // รับค่าจาก query หรือ body ก็ได้
         const user_id = req.params.user_id;
-
-        if (!user_id) {
-            return res.status(400).json({ error: 'Please provide user_id' });
-        }
-
         const user = await User.findByPk(user_id, {
-            // เลือกเฉพาะฟิลด์ที่ต้องการ
-            attributes: ['user_id', 'nickname', 'created_at', 'device_id'] 
+            attributes: { exclude: ['password'] } 
         });
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        if (!user) return res.status(404).json({ error: 'User not found' });
 
         res.json(user);
-
     } catch (error) {
-        res.status(500).json({ error: 'Internal Server Error', details: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
-
 
 
 exports.updateFcmToken = async (req, res) => {

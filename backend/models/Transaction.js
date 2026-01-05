@@ -1,6 +1,6 @@
+// models/Transaction.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const { User } = require('./User'); // Import User เพื่อทำ Association
 
 const Transaction = sequelize.define('Transaction', {
     transaction_id: {
@@ -13,23 +13,25 @@ const Transaction = sequelize.define('Transaction', {
         allowNull: false
     },
     destination: {
-        type: DataTypes.STRING, // เลขบัญชีปลายทาง หรือชื่อร้านค้า
+        type: DataTypes.STRING,
         allowNull: false
     },
     risk_score: {
-        type: DataTypes.FLOAT, // คะแนนความเสี่ยงจาก AI (0-100)
+        type: DataTypes.FLOAT,
+        allowNull: true,
         defaultValue: 0
     },
     status: {
-        // pending_approval = รอพ่อแม่กด, approved = อนุญาต, rejected = ระงับ, normal = ปกติไม่ต้องตรวจ
         type: DataTypes.ENUM('normal', 'pending_approval', 'approved', 'rejected'),
+        allowNull: true,
         defaultValue: 'normal'
+    },
+    // FK: user_id จะถูกสร้างให้อัตโนมัติโดย Sequelize ตอนทำ Association ใน index.js
+    // แต่ถ้าอยากเขียนให้ชัดเจน ก็ใส่ไว้ได้ครับ
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
-    // user_id (FK) จะถูกสร้างอัตโนมัติตอนทำ Association
 });
-
-// เชื่อมโยงว่า Transaction นี้เป็นของ User (ลูก) คนไหน
-Transaction.belongsTo(User, { foreignKey: 'user_id', as: 'child' });
-User.hasMany(Transaction, { foreignKey: 'user_id' });
 
 module.exports = Transaction;

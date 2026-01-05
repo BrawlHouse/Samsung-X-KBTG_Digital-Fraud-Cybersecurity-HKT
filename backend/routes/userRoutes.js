@@ -6,9 +6,16 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
- * /users:
+ * tags:
+ *   - name: Users
+ *     description: จัดการผู้ใช้งาน (Authentication & Profile)
+ */
+
+/**
+ * @swagger
+ * /users/register:
  *   post:
- *     summary: ลงทะเบียนเข้าใช้งานครั้งแรก (Register / Login)
+ *     summary: สมัครสมาชิกใหม่ (Register)
  *     tags:
  *       - Users
  *     security: []
@@ -19,23 +26,35 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *           schema:
  *             type: object
  *             required:
+ *               - email
+ *               - password
  *               - nickname
- *               - device_id
  *               - role
  *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: mom@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: password123
  *               nickname:
  *                 type: string
- *                 example: คุณแม่สมศรี
- *               device_id:
- *                 type: string
- *                 example: device_abc_123
+ *                 example: แม่สมศรี
  *               role:
  *                 type: string
  *                 enum: [parent, child]
  *                 example: parent
+ *               device_id:
+ *                 type: string
+ *                 example: device_abc_123
+ *               bank_account_number:
+ *                 type: string
+ *                 example: 123-4-56789-0
  *     responses:
  *       201:
- *         description: ลงทะเบียนสำเร็จ ได้รับ Token
+ *         description: สมัครสมาชิกสำเร็จ
  *         content:
  *           application/json:
  *             schema:
@@ -52,22 +71,28 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                       example: 1
  *                     nickname:
  *                       type: string
- *                       example: คุณแม่สมศรี
+ *                       example: แม่สมศรี
+ *                     email:
+ *                       type: string
+ *                       example: mom@example.com
  *                     role:
  *                       type: string
  *                       example: parent
- *                     family_id:
- *                       type: integer
- *                       nullable: true
- *                       example: null
- *                     device_id:
- *                       type: string
- *                       example: device_abc_123
- *                     token:
- *                       type: string
- *                       description: JWT Token สำหรับใช้ยิง API อื่น
  *       400:
- *         description: ข้อมูลไม่ครบ
+ *         description: ข้อมูลไม่ครบ หรือ อีเมลซ้ำ
+ *         content:
+ *           application/json:
+ *             examples:
+ *               missing_field:
+ *                 summary: กรอกข้อมูลไม่ครบ
+ *                 value:
+ *                   error: Please provide all required fields
+ *               duplicate_email:
+ *                 summary: อีเมลซ้ำ
+ *                 value:
+ *                   error: Email already exists
+ *       500:
+ *         description: เกิดข้อผิดพลาดที่ Server
  *         content:
  *           application/json:
  *             schema:
@@ -75,14 +100,100 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *               properties:
  *                 error:
  *                   type: string
- *                   example: Please provide nickname, device_id, and role
+ *                   example: Registration failed
+ *                 details:
+ *                   type: string
+ */
+
+/**
+ * @swagger
+ * /users/login:
+ *   post:
+ *     summary: เข้าสู่ระบบ (Login)
+ *     tags:
+ *       - Users
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: mom@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: เข้าสู่ระบบสำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Login successful
+ *                 token:
+ *                   type: string
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     user_id:
+ *                       type: integer
+ *                       example: 1
+ *                     email:
+ *                       type: string
+ *                       example: mom@example.com
+ *                     nickname:
+ *                       type: string
+ *                       example: แม่สมศรี
+ *                     role:
+ *                       type: string
+ *                       example: parent
+ *                     family_id:
+ *                       type: integer
+ *                       nullable: true
+ *                       example: null
+ *                     bank_account_number:
+ *                       type: string
+ *                       example: 123-4-56789-0
+ *       401:
+ *         description: อีเมลหรือรหัสผ่านไม่ถูกต้อง
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid email or password
+ *       500:
+ *         description: Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Login failed
  */
 
 /**
  * @swagger
  * /users/fcm-token:
  *   post:
- *     summary: อัปเดต FCM Token สำหรับรับแจ้งเตือน (ต้อง Login ก่อน)
+ *     summary: อัปเดต FCM Token สำหรับรับแจ้งเตือน
  *     tags:
  *       - Users
  *     security:
@@ -98,8 +209,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *             properties:
  *               token:
  *                 type: string
- *                 description: Device Token จาก Firebase
- *                 example: "fcm_token_string_here..."
+ *                 example: fcm_token_string_from_firebase...
  *     responses:
  *       200:
  *         description: บันทึก Token สำเร็จ
@@ -110,18 +220,20 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *               properties:
  *                 message:
  *                   type: string
- *                   example: FCM token updated successfully
+ *                   example: FCM Token updated successfully
+ *       401:
+ *         description: Authentication failed
+ *       404:
+ *         description: User not found
  */
-
 
 /**
  * @swagger
  * /users/{user_id}:
  *   get:
- *     summary: ดูข้อมูลส่วนตัว (Get User Info)
+ *     summary: ดูข้อมูลส่วนตัว (Full Profile)
  *     tags:
  *       - Users
- *     security: []
  *     parameters:
  *       - in: path
  *         name: user_id
@@ -131,7 +243,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *           example: 1
  *     responses:
  *       200:
- *         description: พบข้อมูลผู้ใช้งาน
+ *         description: ข้อมูลผู้ใช้งาน
  *         content:
  *           application/json:
  *             schema:
@@ -142,21 +254,32 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                   example: 1
  *                 nickname:
  *                   type: string
- *                   example: คุณแม่สมศรี
+ *                   example: แม่สมศรี
+ *                 email:
+ *                   type: string
+ *                   example: mom@example.com
  *                 role:
  *                   type: string
  *                   example: parent
  *                 family_id:
  *                   type: integer
  *                   nullable: true
- *                   example: null
+ *                   example: 1
  *                 device_id:
  *                   type: string
- *                   example: device_abc_123
- *                 created_at:
+ *                   example: device_abc
+ *                 bank_account_number:
+ *                   type: string
+ *                   example: 123-4-56789-0
+ *                 fcm_token:
+ *                   type: string
+ *                   nullable: true
+ *                 createdAt:
  *                   type: string
  *                   format: date-time
- *                   example: 2024-01-05T12:00:00.000Z
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
  *       404:
  *         description: ไม่พบผู้ใช้งาน
  *         content:
@@ -169,20 +292,18 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                   example: User not found
  *
  *   delete:
- *     summary: ลบผู้ใช้งานออกจากระบบ (Delete User)
+ *     summary: ลบผู้ใช้งาน
  *     tags:
  *       - Users
- *     security: []
  *     parameters:
  *       - in: path
  *         name: user_id
  *         required: true
  *         schema:
  *           type: integer
- *           example: 1
  *     responses:
  *       200:
- *         description: ลบผู้ใช้สำเร็จ
+ *         description: ลบสำเร็จ
  *         content:
  *           application/json:
  *             schema:
@@ -190,7 +311,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *               properties:
  *                 message:
  *                   type: string
- *                   example: User 1 deleted successfully
+ *                   example: User deleted successfully
  *       404:
  *         description: ไม่พบผู้ใช้งาน
  *         content:
@@ -203,8 +324,11 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                   example: User not found
  */
 
-// Register (Public)
-router.post('/', userController.register);
+
+
+
+router.post('/register', userController.register)
+router.post('/login', userController.login);
 
 // Update FCM Token (Require Login) --> ต้องเอาไว้ก่อน /:user_id เพื่อกันสับสน
 router.post('/fcm-token', authMiddleware, userController.updateFcmToken);
@@ -212,5 +336,6 @@ router.post('/fcm-token', authMiddleware, userController.updateFcmToken);
 // Get Info & Delete (Public or Protected depending on logic)
 router.get('/:user_id', userController.getUserInfo);
 router.delete('/:user_id', userController.deleteUser);
+
 
 module.exports = router;
