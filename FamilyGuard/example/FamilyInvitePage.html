@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Family Creation &amp; Invitation</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#197fe6",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar hide for cleaner UI if needed */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white font-display overflow-x-hidden antialiased selection:bg-primary/30 selection:text-primary">
+    <div
+        class="relative flex min-h-screen w-full flex-col max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-2xl overflow-hidden">
+        <!-- Top Navigation -->
+        <header class="flex items-center justify-between px-4 py-3 z-10">
+            <div class="w-10"></div> <!-- Spacer for balance -->
+            <h1 class="text-lg font-bold tracking-tight text-center flex-1">Family Setup</h1>
+            <div class="w-10 flex justify-end">
+                <!-- Optional Help/Skip button could go here, leaving empty for clean look as requested -->
+            </div>
+        </header>
+        <!-- Main Content Scroll Area -->
+        <main class="flex-1 overflow-y-auto px-6 pb-8 pt-2 no-scrollbar flex flex-col items-center">
+            <!-- Hero Illustration & Text -->
+            <div class="flex flex-col items-center gap-6 w-full mt-4">
+                <div class="bg-center bg-no-repeat bg-contain w-full aspect-[4/3] max-w-[280px]"
+                    data-alt="Vector illustration of a family protected by a shield or connecting together safely"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB7ftXucunpPYbM-68SRgCds5OiSZGb35Edk_vR_YDFhRgg_6jsfyvdyqFWGFszw5jGcNkwN17GTNwZzBFEkjKEo-H8kPAm70Z0AW9tuo14-imP07o7qxn3wtnhzFYviX-j9fkCDShNjGl_ohigpBOhRe2emFqOqzBiemZY6psfYhJgHI4RoWVjgfTDZY4XgYonpKur57V-k1NQHG0yB8Iuf9J1Z68dsvowYbaCavxjce_zwdH9ib4XtWveVTy4jl4h-oDhjYF2uQ");'>
+                </div>
+                <div class="flex flex-col items-center gap-3 text-center">
+                    <h2 class="text-2xl font-bold leading-tight tracking-tight">Let's Get Connected</h2>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-relaxed max-w-[320px]">
+                        To start protecting your loved ones, create a new family circle or join an existing one.
+                    </p>
+                </div>
+                <!-- Primary Action: Create Family -->
+                <button
+                    class="w-full mt-2 cursor-pointer group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-primary px-6 py-4 text-white shadow-lg shadow-primary/20 transition-all hover:bg-blue-600 hover:shadow-primary/40 active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[20px]">add_circle</span>
+                    <span class="text-base font-bold">Create a New Family</span>
+                </button>
+            </div>
+            <!-- Divider -->
+            <div class="flex w-full items-center gap-4 py-8">
+                <div class="h-[1px] flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Or join with
+                    code</p>
+                <div class="h-[1px] flex-1 bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+            <!-- Join Family Module -->
+            <div
+                class="w-full rounded-2xl bg-white dark:bg-gray-800 p-5 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+                <label class="flex flex-col gap-3">
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200 ml-1">Have an invite
+                        code?</span>
+                    <div class="relative">
+                        <input
+                            class="peer w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-background-light dark:bg-gray-700/50 py-3.5 px-4 text-center text-lg font-bold tracking-[0.15em] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 placeholder:font-normal placeholder:tracking-normal focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none uppercase transition-all"
+                            placeholder="Ex: A38-9Z2" type="text" />
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400 peer-focus:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">key</span>
+                        </div>
+                    </div>
+                </label>
+                <button
+                    class="mt-4 w-full cursor-pointer flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-700 px-6 py-3.5 text-sm font-bold text-gray-900 dark:text-white transition-all hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-[0.98] focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500">
+                    Join Family
+                </button>
+            </div>
+        </main>
+        <!-- Trust Footer -->
+        <div class="p-6 pb-8">
+            <div class="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500">
+                <span class="material-symbols-outlined text-[16px] fill-current">lock</span>
+                <p class="text-xs font-medium">Your family is protected with end-to-end encryption</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
