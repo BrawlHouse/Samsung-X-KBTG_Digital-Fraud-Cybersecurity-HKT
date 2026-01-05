@@ -11,9 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintHeight_percent="0.33"
-        android:background="#fef2f2" 
-        app:layout_constraintTop_toTopOf="parent" /> 
-        <!-- Note: Android gradient would need a drawable. Just using a solid color close to red-50 for now, or could use a View with background drawable if complex. -->
+        android:background="@drawable/bg_gradient_red_fade"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Center Content -->
     <LinearLayout
@@ -29,12 +28,12 @@
             android:layout_width="120dp"
             android:layout_height="120dp"
             android:layout_marginBottom="32dp"
-            android:background="@drawable/bg_circle_red_light">
+            android:background="@drawable/bg_circle_red_100">
             <ImageView
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_report_problem"
+                android:src="@drawable/ic_warning"
                 app:tint="#ef4444" />
         </FrameLayout>
 
@@ -61,7 +60,7 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_capsule_outline"
+            android:background="@drawable/bg_capsule_white_border_gray"
             android:gravity="center"
             android:paddingHorizontal="16dp"
             android:paddingVertical="8dp">
