@@ -1,9 +1,8 @@
-// models/index.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 // Import Model ย่อยๆ
-const Transaction = require('./Transaction'); // ต้องมั่นใจว่าไฟล์ Transaction.js มีอยู่จริง
+const Transaction = require('./Transaction');
 const Family = require('./Family');
 const Device = require('./Device');
 

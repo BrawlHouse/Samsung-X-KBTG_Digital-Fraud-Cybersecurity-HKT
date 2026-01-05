@@ -1,13 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const authMiddleware = require('../middlewares/authMiddleware'); 
 
-/**
- * @swagger
- * tags:
- *   - name: Users
- *     description: จัดการผู้ใช้งาน (Authentication)
- */
 
 /**
  * @swagger
@@ -85,6 +80,42 @@ const userController = require('../controllers/userController');
 
 /**
  * @swagger
+ * /users/fcm-token:
+ *   post:
+ *     summary: อัปเดต FCM Token สำหรับรับแจ้งเตือน (ต้อง Login ก่อน)
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Device Token จาก Firebase
+ *                 example: "fcm_token_string_here..."
+ *     responses:
+ *       200:
+ *         description: บันทึก Token สำเร็จ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: FCM token updated successfully
+ */
+
+
+/**
+ * @swagger
  * /users/{user_id}:
  *   get:
  *     summary: ดูข้อมูลส่วนตัว (Get User Info)
@@ -97,7 +128,7 @@ const userController = require('../controllers/userController');
  *         required: true
  *         schema:
  *           type: integer
- *         example: 1
+ *           example: 1
  *     responses:
  *       200:
  *         description: พบข้อมูลผู้ใช้งาน
@@ -112,13 +143,20 @@ const userController = require('../controllers/userController');
  *                 nickname:
  *                   type: string
  *                   example: คุณแม่สมศรี
+ *                 role:
+ *                   type: string
+ *                   example: parent
+ *                 family_id:
+ *                   type: integer
+ *                   nullable: true
+ *                   example: null
+ *                 device_id:
+ *                   type: string
+ *                   example: device_abc_123
  *                 created_at:
  *                   type: string
  *                   format: date-time
  *                   example: 2024-01-05T12:00:00.000Z
- *                 device_id:
- *                   type: string
- *                   example: device_abc_123
  *       404:
  *         description: ไม่พบผู้ใช้งาน
  *         content:
@@ -141,7 +179,7 @@ const userController = require('../controllers/userController');
  *         required: true
  *         schema:
  *           type: integer
- *         example: 1
+ *           example: 1
  *     responses:
  *       200:
  *         description: ลบผู้ใช้สำเร็จ
@@ -165,8 +203,14 @@ const userController = require('../controllers/userController');
  *                   example: User not found
  */
 
+// Register (Public)
 router.post('/', userController.register);
-router.get('/user_id', userController.getUserInfo);
-router.delete('/user_id', userController.deleteUser);
+
+// Update FCM Token (Require Login) --> ต้องเอาไว้ก่อน /:user_id เพื่อกันสับสน
+router.post('/fcm-token', authMiddleware, userController.updateFcmToken);
+
+// Get Info & Delete (Public or Protected depending on logic)
+router.get('/:user_id', userController.getUserInfo);
+router.delete('/:user_id', userController.deleteUser);
 
 module.exports = router;

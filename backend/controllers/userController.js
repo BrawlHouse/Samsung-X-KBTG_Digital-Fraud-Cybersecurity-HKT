@@ -105,3 +105,27 @@ exports.getUserInfo = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error', details: error.message });
     }
 };
+
+
+
+exports.updateFcmToken = async (req, res) => {
+    try {
+        const { token } = req.body;
+        const user_id = req.user.user_id; // ได้มาจาก authMiddleware
+
+        if (!token) {
+            return res.status(400).json({ error: 'Device token is required' });
+        }
+
+        // อัปเดตลง Database
+        await User.update({ fcm_token: token }, {
+            where: { user_id: user_id }
+        });
+
+        res.json({ message: 'Device token updated successfully' });
+
+    } catch (error) {
+        console.error('Update Token Error:', error);
+        res.status(500).json({ error: 'Server error', details: error.message });
+    }
+};
