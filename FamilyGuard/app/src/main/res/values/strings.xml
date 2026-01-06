@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">FamilyGuard</string>
+    <string name="accessibility_service_description">FamilyGuard Risk Protection monitors your app usage to keep you safe from risky applications when your account is vulnerable.</string>
 </resources>
