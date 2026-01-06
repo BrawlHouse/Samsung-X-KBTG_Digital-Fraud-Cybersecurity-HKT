@@ -11,12 +11,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-
-// Import ให้ถูกต้อง
 import com.brawlhouse.familyguard.viewmodel.MainViewModel
 import com.brawlhouse.familyguard.ui.Screen
-import com.brawlhouse.familyguard.ui.screens.* // Import หน้าจอทั้งหมด
+import com.brawlhouse.familyguard.ui.screens.*
 import com.brawlhouse.familyguard.ui.theme.FamilyGuardTheme
+import com.brawlhouse.familyguard.data.MemberStatus
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,23 +56,25 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         is Screen.Invite -> {
-                            InviteScreen(
-                                onCreateFamilyClick = { viewModel.navigateTo(Screen.Dashboard) },
-                                onJoinFamilyClick = { viewModel.navigateTo(Screen.Dashboard) }
+                           InviteScreen(
+                                viewModel = viewModel,
+                                onBackClick = { viewModel.navigateTo(Screen.Login) } // หรือหน้าไหนที่ต้องการ
                             )
-                        }
+                            }
                         is Screen.Dashboard -> {
                             DashboardScreen(
+                                viewModel = viewModel,
                                 onSettingsClick = { viewModel.navigateTo(Screen.Survey) },
                                 onAddMemberClick = { viewModel.navigateTo(Screen.Invite) },
                                 onMemberClick = { member ->
-                                    if (member.status == MemberStatus.Check) {
-                                        viewModel.showRiskDialog()
-                                    } else {
+                                if (member.status == MemberStatus.Check) {
+                                viewModel.showRiskDialog()
+                                 }else {
                                         viewModel.navigateTo(Screen.RiskResult(RiskType.LowRisk))
-                                    }
+                                 }
                                 }
-                            )
+                                
+                             )
 
                             // แสดง Dialog ถ้า showRiskDialog เป็น true
                             if (showRiskDialog) {

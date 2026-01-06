@@ -1,6 +1,9 @@
 package com.brawlhouse.familyguard.ui.screens
 
-import androidx.compose.foundation.Image
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,304 +14,214 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.brawlhouse.familyguard.data.FamilyMember
+import com.brawlhouse.familyguard.data.MemberStatus
 import com.brawlhouse.familyguard.ui.theme.FamilyGuardTheme
 import com.brawlhouse.familyguard.ui.theme.Success
 import com.brawlhouse.familyguard.ui.theme.Warning
-
-data class FamilyMember(
-    val name: String,
-    val role: String,
-    val status: MemberStatus,
-    val imageUrl: String? = null
-)
-
-enum class MemberStatus {
-    Safe, Check
-}
-
+import com.brawlhouse.familyguard.viewmodel.MainViewModel
+import androidx.compose.foundation.BorderStroke
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    onSettingsClick: () -> Unit = {},
-    onAddMemberClick: () -> Unit = {},
-    onMemberClick: (FamilyMember) -> Unit = {}
+    viewModel: MainViewModel,
+    onSettingsClick: () -> Unit,
+    onAddMemberClick: () -> Unit,
+    onMemberClick: (FamilyMember) -> Unit
 ) {
-    val members = listOf(
-        FamilyMember("Sarah Jenkins", "Daughter", MemberStatus.Safe),
-        FamilyMember("Mark Jenkins", "Father", MemberStatus.Check),
-        FamilyMember("Martha Jenkins", "Mother", MemberStatus.Safe)
-    )
+    val members by viewModel.familyMembers.collectAsState()
+    val myInviteCode = viewModel.myInviteCode
+    val isLoading = viewModel.isLoading
+    var errorMessage by remember { mutableStateOf(viewModel.errorMessage) }
 
-    Scaffold(
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        "Family Safety",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        "Member Overview",
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-                IconButton(
-                    onClick = onSettingsClick,
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.loadFamilyData()
+    }
+
+    // ใช้ Box ห่อทั้งหมดเพื่อให้ใช้ .align() ได้
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                Row(
                     modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-                            shape = CircleShape
-                        )
+                        .fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Outlined.Settings,
-                        contentDescription = "Settings",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(
-                bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
-                top = 24.dp
-            )
-        ) {
-            // Status Card
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .background(Success.copy(alpha = 0.1f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Outlined.Shield,
-                                contentDescription = null,
-                                tint = Success,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(20.dp))
-                        Column {
+                    Column {
+                        Text("Family Safety", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                "System Active",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                "Monitoring ${members.size} family members.",
+                                "Invite Code: ${myInviteCode.ifBlank { "Loading..." }}",
                                 fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
+                            if (myInviteCode.isNotBlank()) {
+                                IconButton(onClick = {
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    val clip = ClipData.newPlainText("Invite Code", myInviteCode)
+                                    clipboard.setPrimaryClip(clip)
+                                    Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
+                                }) {
+                                    Icon(Icons.Filled.ContentCopy, "Copy code", tint = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        }
+                    }
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Outlined.Settings, "Settings", tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 80.dp)
+            ) {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                        Row(modifier = Modifier.padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.size(64.dp).background(Success.copy(0.1f), CircleShape), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Outlined.Shield, null, tint = Success, modifier = Modifier.size(32.dp))
+                            }
+                            Spacer(Modifier.width(20.dp))
+                            Column {
+                                Text("System Active", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                                Text("Monitoring ${members.size} members", color = MaterialTheme.colorScheme.onSurface.copy(0.6f))
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Text("Family Members", fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp))
+                }
+
+                items(members) { member ->
+                    MemberCard(
+                        member = member,
+                        onClick = { onMemberClick(member) },
+                        onDelete = { viewModel.removeMember(member.userId) }
+                    )
+                }
+
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(2.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                            .clickable { onAddMemberClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.AddCircle, null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(12.dp))
+                            Text("Add Family Member", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
+        }
 
-            item {
-                Text(
-                    "Family Members",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-            }
+        // Loading Indicator
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
 
-            items(members) { member ->
-                MemberCard(member, onClick = { onMemberClick(member) })
-            }
-
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.background)
-                        // Dashed border is hard in Compose native modifiers without custom draw
-                        // mocking it with standard border for now or custom draw
-                        .drawBehind {
-                            // Simplified dashed border logic could go here, generic border for now
-                        }
-                        .border(
-                            2.dp,
-                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f),
-                            RoundedCornerShape(12.dp)
-                        ) // Dashed effect needs custom shape/draw, sticking to solid for speed or simple stroke
-                        .clickable { onAddMemberClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Outlined.AddCircle,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            "Add Family Member",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                        )
+        // Error Message
+        errorMessage?.let { msg ->
+            Snackbar(
+                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                action = {
+                    TextButton(onClick = {
+                        errorMessage = null
+                        viewModel.errorMessage = null  // clear ใน ViewModel ด้วย
+                    }) {
+                        Text("Dismiss")
                     }
                 }
+            ) {
+                Text(msg)
             }
         }
     }
 }
 
 @Composable
-fun MemberCard(member: FamilyMember, onClick: () -> Unit = {}) {
-    val isSafe = member.status == MemberStatus.Safe
-    val statusColor = if (isSafe) Success else Warning
-    val statusText = if (isSafe) "Safe" else "Check"
-    val statusIcon = if (isSafe) Icons.Filled.CheckCircle else Icons.Filled.Warning
+fun MemberCard(
+    member: FamilyMember,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val isPending = member.status == MemberStatus.Check
+    val statusColor = if (isPending) Warning else Success
+    val statusText = if (isPending) "Pending" else "Safe"
+    val statusIcon = if (isPending) Icons.Filled.Warning else Icons.Filled.CheckCircle
 
     Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .then(
-                if (!isSafe) Modifier.border(
-                    2.dp,
-                    Warning,
-                    RoundedCornerShape(16.dp)
-                ) else Modifier
-            )
+        border = if (isPending) androidx.compose.foundation.BorderStroke(2.dp, Warning) else null
     ) {
         Row(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Avatar
-                Box(contentAlignment = Alignment.Center) {
-                    Surface(
-                        shape = CircleShape,
-                        modifier = Modifier.size(80.dp),
-                        color = Color.LightGray
-                    ) {
-                        // Placeholder for image
-                        Icon(
-                            Icons.Filled.Person,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxSize(),
-                            tint = Color.White
-                        )
-                    }
+                Surface(shape = CircleShape, color = Color.LightGray, modifier = Modifier.size(60.dp)) {
+                    Icon(Icons.Filled.Person, null, tint = Color.White, modifier = Modifier.padding(12.dp))
                 }
-                Spacer(modifier = Modifier.width(20.dp))
+                Spacer(Modifier.width(16.dp))
                 Column {
-                    Text(
-                        member.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Surface(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Text(
-                            member.role,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                    }
+                    Text(member.nickname, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(member.role.replaceFirstChar { it.uppercase() }, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(0.7f))
                 }
             }
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(statusColor.copy(alpha = 0.1f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        statusIcon,
-                        contentDescription = null,
-                        tint = statusColor,
-                        modifier = Modifier.size(28.dp)
-                    )
+            Column(horizontalAlignment = Alignment.End) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(statusIcon, null, tint = statusColor, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(statusText, color = statusColor, fontSize = 13.sp)
                 }
-                Text(
-                    statusText.uppercase(),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = statusColor,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Outlined.Delete, null, tint = MaterialTheme.colorScheme.error)
+                }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun DashboardScreenPreview() {
-    FamilyGuardTheme {
-        DashboardScreen()
     }
 }
