@@ -3,10 +3,14 @@ const { User, Transaction } = require('../models');
 const { sendPushNotification } = require('../services/notificationService');
 const aiService = require('../services/aiService'); // เรียกตัวคำนวณกลับมา
 
+// ----------------------------------------------------------------------------
+// 1. Analyze (วิเคราะห์ความเสี่ยง)
+// ผู้เรียก: พ่อแม่/ผู้สูงอายุ (Role: 'parent')
+// เป้าหมาย: ถ้าเสี่ยงสูง -> แจ้งเตือนลูกหลาน (Role: 'child')
+// ----------------------------------------------------------------------------
 exports.analyze = async (req, res) => {
     try {
-        const user_id = req.user.user_id; 
-        // รับทั้ง "คำตอบ" และ "ข้อมูลธุรกรรม"
+        const elderly_id = req.user.user_id; // คนกดคือ Parent
         const { answers, amount, destination } = req.body;
 
         // 1. Validation
@@ -16,39 +20,43 @@ exports.analyze = async (req, res) => {
             });
         }
 
-        console.log(`Analyzing Transaction for User ${user_id}`);
+        console.log(`Analyzing Transaction for Elderly (Parent) ID: ${elderly_id}`);
 
-        // 2. คำนวณความเสี่ยง (Logic เดิมของคุณ)
-        // ผลลัพธ์ที่ได้จะเป็น object เช่น { risk_score: 80, level: 'HIGH', ... }
-        const aiResult = aiService.analyzeRisk(answers);
+        // 2. AI วิเคราะห์
+        const aiResult = await aiService.analyzeRisk(answers);
         const risk_score = aiResult.risk_score;
 
-        // 3. กำหนดสถานะ (Logic ใหม่)
+        // 3. กำหนดสถานะ
         let status = 'normal';
         if (risk_score >= 80) {
             status = 'pending_approval';
         }
 
-        // 4. บันทึก Transaction ลง Database (ใช้ score ที่คำนวณได้)
+        // 4. บันทึก Transaction
         const newTrans = await Transaction.create({
-            user_id,
+            user_id: elderly_id,
             amount,
             destination,
             risk_score,
             status
         });
 
-        // 5. ถ้าเสี่ยงสูง -> แจ้งเตือนพ่อแม่
+        // 5. ถ้าเสี่ยงสูง -> แจ้งเตือน "ลูกหลาน" (child)
         if (status === 'pending_approval') {
-            const child = await User.findByPk(user_id);
-            if (child && child.family_id) {
-                const parent = await User.findOne({
-                    where: { family_id: child.family_id, role: 'parent' }
+            const elderlyUser = await User.findByPk(elderly_id);
+            
+            if (elderlyUser && elderlyUser.family_id) {
+                // 🔍 หา "ลูก" ในครอบครัวเดียวกัน
+                const childUser = await User.findOne({
+                    where: { 
+                        family_id: elderlyUser.family_id, 
+                        role: 'child' // <--- แจ้งเตือนไปที่ Child
+                    }
                 });
 
-                if (parent && parent.fcm_token) {
-                    const title = "🚨 แจ้งเตือนธุรกรรมเสี่ยง!";
-                    const body = `น้อง ${child.nickname} จะโอน ${amount} บาท (ความเสี่ยง ${risk_score}%) จากการตอบว่า: ${answers.join(', ')}`;
+                if (childUser && childUser.fcm_token) {
+                    const title = "🚨 แจ้งเตือนพ่อแม่ทำรายการเสี่ยง!";
+                    const body = `คุณพ่อ/แม่ (${elderlyUser.nickname}) กำลังจะโอนเงิน ${amount} บาท (ความเสี่ยง ${risk_score}%) โปรดตรวจสอบด่วน`;
                     
                     const dataPayload = {
                         transaction_id: newTrans.transaction_id.toString(),
@@ -56,12 +64,12 @@ exports.analyze = async (req, res) => {
                         risk_score: risk_score.toString()
                     };
 
-                    await sendPushNotification(parent.fcm_token, title, body, dataPayload);
+                    await sendPushNotification(childUser.fcm_token, title, body, dataPayload);
+                    console.log(`Alert sent to Child: ${childUser.nickname}`);
                 }
             }
         }
 
-        // ส่งผลกลับไป ทั้งผลวิเคราะห์ และ ข้อมูล Transaction
         res.status(201).json({
             message: 'Analysis complete',
             ai_result: aiResult,
@@ -74,51 +82,62 @@ exports.analyze = async (req, res) => {
     }
 };
 
-
-
-
-
+// ----------------------------------------------------------------------------
+// 2. Respond (อนุมัติ/ระงับ)
+// ผู้เรียก: ลูกหลาน (Role: 'child')
+// เป้าหมาย: อนุมัติรายการของพ่อแม่
+// ----------------------------------------------------------------------------
 exports.respondToTransaction = async (req, res) => {
     try {
-        // รับค่าจากพ่อแม่ (User ID จาก Token)
-        const parent_id = req.user.user_id; 
-        const { transaction_id, action } = req.body; // action: 'approve' หรือ 'reject'
+        const child_id = req.user.user_id; // คนกดคือ Child
+        const { transaction_id, action } = req.body;
 
-        // 1. Validation
         if (!['approve', 'reject'].includes(action)) {
             return res.status(400).json({ error: 'Action must be approve or reject' });
         }
 
-        // 2. หา Transaction ที่จะอนุมัติ
+        // 1. หา Transaction + ข้อมูลพ่อแม่เจ้าของรายการ
         const transaction = await Transaction.findByPk(transaction_id, {
-            include: [{ model: User, as: 'user' }] // join เพื่อเอาข้อมูลลูก
+            include: [{ model: User, as: 'user' }] 
         });
 
         if (!transaction) {
             return res.status(404).json({ error: 'Transaction not found' });
         }
 
-        // 3. Security Check: คนกดต้องเป็นพ่อแม่ของเจ้าของ Transaction นี้จริงๆ
-        // หาข้อมูลพ่อแม่
-        const parent = await User.findByPk(parent_id);
-        
-        // เช็คว่าอยู่บ้านเดียวกันไหม?
-        if (parent.family_id !== transaction.user.family_id) {
-            return res.status(403).json({ error: 'You are not authorized to approve this transaction' });
+        // 2. Security Check
+        const childUser = await User.findByPk(child_id);
+
+        // เช็ค: คนกดต้องเป็น Child (ลูกหลาน)
+        if (childUser.role !== 'child') {
+            return res.status(403).json({ error: 'Only children can approve transactions' });
         }
 
-        // เช็คสถานะปัจจุบัน (ต้องเป็น pending เท่านั้นถึงจะกดได้)
+        // เช็ค: ต้องอยู่บ้านเดียวกันกับพ่อแม่เจ้าของรายการ
+        if (childUser.family_id !== transaction.user.family_id) {
+            return res.status(403).json({ error: 'You are not authorized for this family' });
+        }
+
+        // เช็ค: ต้องรออนุมัติอยู่
         if (transaction.status !== 'pending_approval') {
-            return res.status(400).json({ error: 'Transaction is not in pending state' });
+            return res.status(400).json({ error: 'Transaction is not pending' });
         }
 
-        // 4. อัปเดตสถานะ
+        // 3. อัปเดตสถานะ
         transaction.status = (action === 'approve') ? 'approved' : 'rejected';
         await transaction.save();
 
-        console.log(`Parent ${parent.nickname} ${action} transaction ${transaction_id}`);
+        console.log(`Child ${childUser.nickname} ${action} transaction ${transaction_id}`);
 
-        // (Optional) ตรงนี้อาจจะยิง Noti กลับไปบอกลูกว่า "พ่ออนุมัติแล้วนะ" ก็ได้
+        // 4. แจ้งผลกลับไปที่เครื่องพ่อแม่
+        if (transaction.user.fcm_token) {
+            const title = action === 'approve' ? "✅ ลูกหลานอนุมัติแล้ว" : "❌ รายการถูกระงับ";
+            const body = action === 'approve' 
+               ? "ลูกตรวจสอบแล้วว่าปลอดภัย โอนได้เลยครับ" 
+               : "ลูกเห็นว่าเสี่ยงเกินไป จึงขอยกเลิกรายการนี้นะครับ";
+            
+            await sendPushNotification(transaction.user.fcm_token, title, body);
+        }
 
         res.json({
             message: `Transaction ${action} successfully`,

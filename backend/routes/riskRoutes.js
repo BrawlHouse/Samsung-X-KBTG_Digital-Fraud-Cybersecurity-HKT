@@ -107,7 +107,7 @@ router.post('/analyze', riskController.analyze);
  * @swagger
  * /risk/respond:
  *   post:
- *     summary: พ่อแม่ตอบกลับการขอทำธุรกรรม (Approve/Reject)
+ *     summary: ลูกหลานกดยอมรับ/ไม่ยอมรับให้ธุรกรรมพ่อแม่ (Approve/Reject)
  *     tags: [Risk]
  *     security:
  *       - bearerAuth: []
