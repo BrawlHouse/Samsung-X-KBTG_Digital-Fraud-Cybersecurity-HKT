@@ -1,10 +1,8 @@
 package com.brawlhouse.familyguard.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -23,16 +21,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.brawlhouse.familyguard.ui.theme.FamilyGuardTheme
+import com.brawlhouse.familyguard.viewmodel.MainViewModel
 
 @Composable
 fun LoginScreen(
-    onLoginClick: () -> Unit = {},
+    viewModel: MainViewModel = viewModel(), // เชื่อมต่อ ViewModel
     onCreateAccountClick: () -> Unit = {}
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    // ใช้สำหรับการสลับการมองเห็นรหัสผ่านใน UI เท่านั้น
     var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
@@ -58,7 +56,7 @@ fun LoginScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Security, // mapped from shield_person
+                    imageVector = Icons.Outlined.Security,
                     contentDescription = "Logo",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
@@ -107,10 +105,9 @@ fun LoginScreen(
                     modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
                 )
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    value = viewModel.email, // ดึงค่าจาก ViewModel
+                    onValueChange = { viewModel.onEmailChange(it) }, // ส่งค่ากลับไป ViewModel
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     placeholder = { Text("name@example.com") },
                     leadingIcon = {
@@ -138,20 +135,16 @@ fun LoginScreen(
                     modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
                 )
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    value = viewModel.password, // ดึงค่าจาก ViewModel
+                    onValueChange = { viewModel.onPasswordChange(it) }, // ส่งค่ากลับไป ViewModel
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     placeholder = { Text("Enter your password") },
                     leadingIcon = {
                         Icon(Icons.Outlined.Lock, contentDescription = "Password")
                     },
                     trailingIcon = {
-                        val image = if (passwordVisible)
-                            Icons.Outlined.Visibility
-                        else
-                            Icons.Outlined.VisibilityOff
+                        val image = if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff
                         Icon(
                             imageVector = image,
                             contentDescription = "Toggle password visibility",
@@ -170,6 +163,18 @@ fun LoginScreen(
                 )
             }
 
+            // Error Message Display
+            if (viewModel.errorMessage != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = viewModel.errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Start
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -185,18 +190,30 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Buttons
+            // Login Button
             Button(
-                onClick = onLoginClick,
+                onClick = { viewModel.login() }, // เรียกฟังก์ชัน Login ใน ViewModel
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                enabled = !viewModel.isLoading, // ปิดปุ่มระหว่างรอ API
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Log In", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                if (viewModel.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Log In", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
             }
+
             Spacer(modifier = Modifier.height(12.dp))
+            
+            // Create Account Button
             OutlinedButton(
                 onClick = onCreateAccountClick,
                 modifier = Modifier
