@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.brawlhouse.familyguard"
-    compileSdk {
-        version = release(36)
-    }
+    // แก้ไขจุดที่ 1: เปลี่ยนรูปแบบการเขียน compileSdk
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.brawlhouse.familyguard"
+        // แก้ไขจุดที่ 2: ปรับ SDK ให้เสถียร (Android 15 คือ 35)
         minSdk = 29
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -29,11 +29,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        // แก้ไขจุดที่ 3: ปรับเป็น Java 17 ให้แมตช์กับที่เราตั้งค่าไว้ตอนแรก
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
 
