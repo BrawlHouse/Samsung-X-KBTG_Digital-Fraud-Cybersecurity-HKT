@@ -6,6 +6,11 @@ const Family = sequelize.define('Family', {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
+    },
+    invite_code: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true // ห้ามซ้ำกันทั้งระบบ
     }
     // created_at จะถูกสร้างให้เองโดย default ของ sequelize (updatedAt, createdAt)
 });

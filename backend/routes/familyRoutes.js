@@ -5,22 +5,27 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 router.use(authMiddleware);
 
-/**
- * @swagger
- * tags:
- *   - name: Family
- *     description: ระบบจัดการครอบครัว
- */
 
 /**
  * @swagger
- * /family:
+ * tags:
+ *   name: Family
+ *   description: Family management (create, join, members, remove)
+ */
+
+
+/**
+ * @swagger
+ * /family/create:
  *   post:
- *     summary: สร้างครอบครัวใหม่
+ *     summary: Create a new family
+ *     description: Create a family and assign the current user as a member
  *     tags: [Family]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       201:
- *         description: สร้างครอบครัวสำเร็จ
+ *         description: Family created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -31,9 +36,20 @@ router.use(authMiddleware);
  *                   example: Family created successfully
  *                 family_id:
  *                   type: integer
- *                   example: 101
- *       400:
- *         description: ผู้ใช้นี้มีครอบครัวอยู่แล้ว
+ *                   example: 1
+ *                 invite_code:
+ *                   type: string
+ *                   example: A1B2C3
+ *                 created_at:
+ *                   type: string
+ *                   example: 2026-01-06T10:00:00Z
+ *                 updated_at:
+ *                   type: string
+ *                   example: 2026-01-06T10:00:00Z
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       500:
+ *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
@@ -41,74 +57,100 @@ router.use(authMiddleware);
  *               properties:
  *                 error:
  *                   type: string
- *                   example: User already belongs to a family
  */
-router.post('/', familyController.createFamily);
+
+// 1. สร้างครอบครัว (POST /family/create)
+// Header: Authorization: Bearer <token>
+router.post('/create', authMiddleware, familyController.createFamily);
+
+
+
 
 /**
  * @swagger
- * /family/{user_id}:
- *   get:
- *     summary: ดู Family ID ของ User
+ * /family/join:
+ *   post:
+ *     summary: Join a family using invite code
  *     tags: [Family]
- *     parameters:
- *       - in: path
- *         name: user_id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID ของผู้ใช้ที่ต้องการดูข้อมูล
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - invite_code
+ *             properties:
+ *               invite_code:
+ *                 type: string
+ *                 example: A1B2C3
  *     responses:
  *       200:
- *         description: พบข้อมูลครอบครัว
+ *         description: Joined family successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 user_id:
+ *                 message:
+ *                   type: string
+ *                   example: Joined family successfully
+ *                 family:
+ *                   type: object
+ *                   properties:
+ *                     family_id:
+ *                       type: integer
+ *                       example: 1
+ *                     invite_code:
+ *                       type: string
+ *                       example: A1B2C3
+ *       404:
+ *         description: Invalid invite code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid invite code
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+// 2. เข้าร่วมครอบครัว (POST /family/join)
+// Body: { "invite_code": "XXXXXX" }
+router.post('/join', authMiddleware, familyController.joinFamily);
+
+
+
+
+/**
+ * @swagger
+ * /family/members:
+ *   get:
+ *     summary: Get members of current user's family
+ *     tags: [Family]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Family members retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 family_id:
  *                   type: integer
  *                   example: 1
- *                 family_id:
- *                   type: integer
- *                   example: 101
- *       404:
- *         description: ไม่พบผู้ใช้ หรือ ไม่มีครอบครัว
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
+ *                 invite_code:
  *                   type: string
- *                   example: User has no family
- */
-router.get('/:user_id', familyController.getFamilyInfo);
-
-/**
- * @swagger
- * /family/{family_id}/members:
- *   get:
- *     summary: ดูรายชื่อสมาชิกในครอบครัว
- *     tags: [Family]
- *     parameters:
- *       - in: path
- *         name: family_id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID ของครอบครัว
- *     responses:
- *       200:
- *         description: รายชื่อสมาชิกในครอบครัว
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 family_id:
- *                   type: integer
- *                   example: 101
+ *                   example: A1B2C3
  *                 members:
  *                   type: array
  *                   items:
@@ -116,18 +158,34 @@ router.get('/:user_id', familyController.getFamilyInfo);
  *                     properties:
  *                       user_id:
  *                         type: integer
- *                         example: 2
+ *                         example: 10
  *                       nickname:
  *                         type: string
- *                         example: ลูกชาย
+ *                         example: Mom
  *                       role:
  *                         type: string
- *                         example: child
+ *                         example: parent
  *                       device_id:
  *                         type: string
- *                         example: device_xyz_456
+ *                         example: device_abc_123
+ *                       email:
+ *                         type: string
+ *                         example: mom@example.com
+ *                       bank_account_number:
+ *                         type: string
+ *                         example: 123-4-56789-0
+ *       400:
+ *         description: User is not in a family
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: You are not in a family
  *       404:
- *         description: ไม่พบครอบครัว
+ *         description: Family not found
  *         content:
  *           application/json:
  *             schema:
@@ -136,89 +194,37 @@ router.get('/:user_id', familyController.getFamilyInfo);
  *                 error:
  *                   type: string
  *                   example: Family not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
  */
-router.get('/:family_id/members', familyController.getMembers);
+
+// 3. ดูสมาชิกในครอบครัว (GET /family/members)
+// ไม่ต้องส่ง param อะไรมา ระบบจะดูจาก Token เองว่าอยู่บ้านไหน
+router.get('/members', authMiddleware, familyController.getMembers);
+
+
+
 
 /**
  * @swagger
- * /family/{family_id}/members:
- *   post:
- *     summary: เพิ่มสมาชิกเข้าครอบครัว
- *     tags: [Family]
- *     parameters:
- *       - in: path
- *         name: family_id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID ของครอบครัว
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - user_id
- *             properties:
- *               user_id:
- *                 type: integer
- *                 example: 5
- *                 description: ID ของ User ที่จะเพิ่ม
- *     responses:
- *       200:
- *         description: เพิ่มสมาชิกสำเร็จ
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: User 5 added to family 101 successfully
- *       400:
- *         description: User มีบ้านอยู่แล้ว หรือข้อมูลไม่ครบ
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: User already belongs to a family
- *       404:
- *         description: ไม่พบ User หรือ Family
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: User or Family not found
- */
-router.post('/:family_id/members', familyController.addMember);
-
-/**
- * @swagger
- * /family/{family_id}/members/{user_id}:
+ * /family/members/{user_id}:
  *   delete:
- *     summary: ลบสมาชิกออกจากครอบครัว
+ *     summary: Remove a member from the family
  *     tags: [Family]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: family_id
- *         required: true
- *         schema:
- *           type: integer
  *       - in: path
  *         name: user_id
  *         required: true
  *         schema:
  *           type: integer
+ *         example: 5
  *     responses:
  *       200:
- *         description: ลบสมาชิกสำเร็จ
+ *         description: Member removed successfully
  *         content:
  *           application/json:
  *             schema:
@@ -226,9 +232,9 @@ router.post('/:family_id/members', familyController.addMember);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Member removed from family successfully
+ *                   example: Member removed successfully
  *       400:
- *         description: User ไม่ได้อยู่ใน Family นี้
+ *         description: User is not in a family
  *         content:
  *           application/json:
  *             schema:
@@ -236,9 +242,19 @@ router.post('/:family_id/members', familyController.addMember);
  *               properties:
  *                 error:
  *                   type: string
- *                   example: User is not in this family
+ *                   example: You are not in a family
+ *       403:
+ *         description: Forbidden (no permission or different family)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Cannot remove user from another family
  *       404:
- *         description: ไม่พบ User หรือ Family
+ *         description: Target user not found
  *         content:
  *           application/json:
  *             schema:
@@ -246,8 +262,17 @@ router.post('/:family_id/members', familyController.addMember);
  *               properties:
  *                 error:
  *                   type: string
- *                   example: User or Family not found
+ *                   example: User not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
  */
-router.delete('/:family_id/members/:user_id', familyController.removeMember);
+
+// 4. ลบสมาชิก (DELETE /family/members/:user_id)
+// ส่ง ID ของคนที่จะลบไปใน URL
+router.delete('/members/:user_id', authMiddleware, familyController.removeMember);
+
+
 
 module.exports = router;
