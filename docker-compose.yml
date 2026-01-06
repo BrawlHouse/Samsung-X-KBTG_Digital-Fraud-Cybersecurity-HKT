@@ -7,12 +7,14 @@ services:
     container_name: scam_guard_mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: poom1234  # รหัสเดียวกับที่คุณใช้
-      MYSQL_DATABASE: scam_guard_db  # สร้าง DB ชื่อนี้ให้อัตโนมัติ!
+      MYSQL_ROOT_PASSWORD: poom1234
+      MYSQL_DATABASE: scam_guard_db
     ports:
-      - "3306:3306" # map port ออกมาให้เครื่องเราใช้ได้ด้วย
+      - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql # เก็บข้อมูลไว้ถาวร (ปิด docker ข้อมูลไม่หาย)
+      - mysql_data:/var/lib/mysql
+    networks:
+      - scam_guard_network
 
   # 2. ส่วนของ Backend (Node.js)
   backend:
@@ -22,9 +24,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - mysqldb # บอกว่าต้องรอให้ db ตื่นก่อนนะ
+      - mysqldb
     environment:
-      # สำคัญ! ใน Docker เราใช้ localhost ไม่ได้ ต้องใช้ชื่อ Service (mysqldb)
       DB_HOST: mysqldb 
       DB_USER: root
       DB_PASS: poom1234
@@ -32,8 +33,15 @@ services:
       PORT: 3000
       JWT_SECRET: super_secret_scam_guard_key_change_me
     volumes:
-      - .:/app # sync โค้ดกับเครื่องเรา (แก้โค้ดปุ๊บ ใน docker เปลี่ยนด้วย)
-      - /app/node_modules
+      - ./backend:/app          # แก้จาก .:/app เป็น ./backend:/app
+      - /app/node_modules       # เพื่อไม่ให้ node_modules ในเครื่องไปทับใน container
+    networks:
+      - scam_guard_network
+
+# กำหนดชื่อ Network ที่จะใช้
+networks:
+  scam_guard_network:
+    driver: bridge
 
 volumes:
   mysql_data:
