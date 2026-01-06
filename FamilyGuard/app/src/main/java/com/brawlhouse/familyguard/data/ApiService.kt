@@ -3,7 +3,10 @@ package com.brawlhouse.familyguard.data
 import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 // --- Existing Login Models (ของเดิม) ---
 data class LoginRequest(val email: String, val password: String)
@@ -44,4 +47,16 @@ interface ApiService {
     // เพิ่มฟังก์ชัน Register
     @POST("users/register")
     suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
+
+    @POST("family/create")
+    suspend fun createFamily(): Response<CreateFamilyResponse>
+
+    @POST("family/join")
+    suspend fun joinFamily(@Body request: JoinFamilyRequest): Response<GeneralResponse>
+
+    @GET("family/members")
+    suspend fun getFamilyMembers(): Response<GetMembersResponse>
+
+    @DELETE("family/members/{user_id}")
+    suspend fun removeMember(@Path("user_id") userId: Int): Response<GeneralResponse>
 }
