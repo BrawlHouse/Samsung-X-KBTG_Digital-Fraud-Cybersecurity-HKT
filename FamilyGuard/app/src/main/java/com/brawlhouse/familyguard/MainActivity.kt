@@ -9,20 +9,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.brawlhouse.familyguard.ui.MainViewModel
+import com.brawlhouse.familyguard.viewmodel.MainViewModel
 import com.brawlhouse.familyguard.ui.Screen
-import com.brawlhouse.familyguard.ui.screens.DashboardScreen
-import com.brawlhouse.familyguard.ui.screens.InviteScreen
-import com.brawlhouse.familyguard.ui.screens.LoginScreen
-import com.brawlhouse.familyguard.ui.screens.RiskAlertDialog
-import com.brawlhouse.familyguard.ui.screens.RiskResultScreen
-import com.brawlhouse.familyguard.ui.screens.RiskType
-import com.brawlhouse.familyguard.ui.screens.RoleSelectionScreen
-import com.brawlhouse.familyguard.ui.screens.SafetySurveyScreen
+import com.brawlhouse.familyguard.ui.screens.*
 import com.brawlhouse.familyguard.ui.theme.FamilyGuardTheme
+import com.brawlhouse.familyguard.data.MemberStatus
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,15 +27,26 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    // เรียกใช้ ViewModel
                     val viewModel: MainViewModel = viewModel()
+
+                    // สังเกตสถานะการเปลี่ยนหน้า
                     val currentScreen by viewModel.currentScreen.collectAsState()
                     val showRiskDialog by viewModel.showRiskDialog.collectAsState()
 
                     when (val screen = currentScreen) {
                         is Screen.Login -> {
                             LoginScreen(
-                                onLoginClick = { viewModel.navigateTo(Screen.Dashboard) },
-                                onCreateAccountClick = { viewModel.navigateTo(Screen.RoleSelection) }
+                                viewModel = viewModel,
+                                // แก้ให้ไปหน้า Register ก่อน (ถ้าต้องการ) หรือไป RoleSelection ตาม flow ของคุณ
+                                onCreateAccountClick = { viewModel.navigateTo(Screen.Register) }
+                            )
+                        }
+                        // เพิ่มเคส Register ที่เราเพิ่งทำไป
+                        is Screen.Register -> {
+                            RegisterScreen(
+                                viewModel = viewModel,
+                                onBackClick = { viewModel.navigateTo(Screen.Login) }
                             )
                         }
                         is Screen.RoleSelection -> {
@@ -52,30 +56,32 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         is Screen.Invite -> {
-                            InviteScreen(
-                                onCreateFamilyClick = { viewModel.navigateTo(Screen.Dashboard) },
-                                onJoinFamilyClick = { viewModel.navigateTo(Screen.Dashboard) }
+                           InviteScreen(
+                                viewModel = viewModel,
+                                onBackClick = { viewModel.navigateTo(Screen.Login) } // หรือหน้าไหนที่ต้องการ
                             )
-                        }
+                            }
                         is Screen.Dashboard -> {
                             DashboardScreen(
+                                viewModel = viewModel,
                                 onSettingsClick = { viewModel.navigateTo(Screen.Survey) },
                                 onAddMemberClick = { viewModel.navigateTo(Screen.Invite) },
                                 onMemberClick = { member ->
-                                    if (member.status == com.brawlhouse.familyguard.ui.screens.MemberStatus.Check) {
-                                        viewModel.showRiskDialog()
-                                    } else {
+                                if (member.status == MemberStatus.Check) {
+                                viewModel.showRiskDialog()
+                                 }else {
                                         viewModel.navigateTo(Screen.RiskResult(RiskType.LowRisk))
-                                    }
+                                 }
                                 }
-                            )
-                            // Risk Dialog Demo
-                           // Triggering logic is not implemented, but if showRiskDialog is true:
+                                
+                             )
+
+                            // แสดง Dialog ถ้า showRiskDialog เป็น true
                             if (showRiskDialog) {
                                 RiskAlertDialog(
                                     onDismissRequest = { viewModel.dismissRiskDialog() },
-                                    onRejectClick = { 
-                                        viewModel.dismissRiskDialog() 
+                                    onRejectClick = {
+                                        viewModel.dismissRiskDialog()
                                         viewModel.navigateTo(Screen.RiskResult(RiskType.HighRisk))
                                     },
                                     onAllowClick = {
@@ -88,8 +94,7 @@ class MainActivity : ComponentActivity() {
                         is Screen.Survey -> {
                             SafetySurveyScreen(
                                 onCloseClick = { viewModel.navigateTo(Screen.Dashboard) },
-                                onOptionSelected = { 
-                                    // Demo: Selecting an option shows risk dialog or result
+                                onOptionSelected = {
                                     viewModel.navigateTo(Screen.RiskResult(RiskType.ApprovalRequired))
                                 }
                             )
