@@ -9,6 +9,7 @@ const swaggerSpecs = require('./config/swagger');
 const userRoutes = require('./routes/userRoutes');
 const familyRoutes = require('./routes/familyRoutes');
 const riskRoutes = require('./routes/riskRoutes');
+const analyzeRoutes = require('./routes/analyzeRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.get('/', (req, res) => {
 app.use('/users', userRoutes);
 app.use('/family', familyRoutes)
 app.use('/risk', riskRoutes)
+app.use('/analyze', analyzeRoutes)
 
 sequelize.sync({ force: false }) // force: true จะลบตารางเก่าทิ้งแล้วสร้างใหม่ (ระวังข้อมูลหาย)
     .then(() => {
