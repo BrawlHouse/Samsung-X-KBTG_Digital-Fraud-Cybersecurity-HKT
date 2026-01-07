@@ -110,7 +110,7 @@ class MainActivity : ComponentActivity() {
                         is Screen.Survey -> {
                             SafetySurveyScreen(
                                     onCloseClick = { viewModel.navigateTo(Screen.Dashboard) },
-                                    onOptionSelected = {
+                                    onSubmit = {
                                         viewModel.navigateTo(
                                                 Screen.RiskResult(RiskType.ApprovalRequired)
                                         )
