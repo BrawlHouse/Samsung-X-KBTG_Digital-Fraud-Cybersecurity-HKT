@@ -16,9 +16,11 @@ class RiskDetectionAccessibilityService : AccessibilityService() {
     // For now, we assume true to demonstrate the feature.
     private val isUserAtRisk: Boolean = true
 
-    private var callStartTime: Long? = null
+    // Separate tracking for SIM and VoIP/Audio Mode to ensure robustness
+    private var simCallStartTime: Long? = null
+    private var voipCallStartTime: Long? = null
 
-    // 15 minutes in milliseconds
+    // 15 minutes in milliseconds (Testing: 15 seconds)
     private val CALL_DURATION_THRESHOLD_MS = 15 * 1000
 
     private lateinit var telephonyManager: android.telephony.TelephonyManager
@@ -34,19 +36,22 @@ class RiskDetectionAccessibilityService : AccessibilityService() {
     }
 
     private fun registerPhoneStateListener() {
-        // Standard Phone Call Listener (SIM Card)
         try {
             telephonyManager.listen(
                     object : android.telephony.PhoneStateListener() {
                         @Deprecated("Deprecated in Java")
                         override fun onCallStateChanged(state: Int, phoneNumber: String?) {
-                            if (state == android.telephony.TelephonyManager.CALL_STATE_OFFHOOK) {
-                                trySetStartTime()
-                            } else if (state == android.telephony.TelephonyManager.CALL_STATE_IDLE
-                            ) {
-                                // Check VoIP before clearing (because user might switch from SIM to
-                                // VoIP or vice versa, reasonably rare but possible to handle)
-                                checkVoipState()
+                            when (state) {
+                                android.telephony.TelephonyManager.CALL_STATE_OFFHOOK -> {
+                                    // Call started (or active)
+                                    if (simCallStartTime == null) {
+                                        simCallStartTime = System.currentTimeMillis()
+                                    }
+                                }
+                                android.telephony.TelephonyManager.CALL_STATE_IDLE -> {
+                                    // Call ended
+                                    simCallStartTime = null
+                                }
                             }
                         }
                     },
@@ -60,15 +65,15 @@ class RiskDetectionAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
 
-        // Always update VoIP state on every event to track start time as accurately as possible
-        checkVoipState()
+        // Check Audio Mode (VoIP/Call)
+        checkAudioModeState()
 
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             val packageName = event.packageName?.toString() ?: return
 
             if (isUserAtRisk && sensitivePackages.contains(packageName)) {
 
-                // Check call logic: Must be in call AND > 15 minutes (works for both SIM & VoIP)
+                // Check call logic
                 if (isCallConditionMet()) {
                     // Redirect user back to our app
                     val intent =
@@ -85,47 +90,39 @@ class RiskDetectionAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun isCallConditionMet(): Boolean {
-        // If callStartTime is set, we are in a call (according to our listener).
-        // Check if duration exceeds threshold.
-        val startTime = callStartTime ?: return false
-        val duration = System.currentTimeMillis() - startTime
-        return duration > CALL_DURATION_THRESHOLD_MS
-    }
+    private fun checkAudioModeState() {
+        // Check AudioManager Mode for VoIP (Discord, Line, etc) or standard calls
+        // This acts as a fallback or primary check for VoIP
+        val mode = audioManager.mode
 
-    private fun checkVoipState() {
-        try {
-            // Mode 3 = MODE_IN_COMMUNICATION (VoIP like Discord, Line, Messenger)
-            // Mode 2 = MODE_IN_CALL (Standard Phone)
-            val mode = audioManager.mode
-            if (mode == android.media.AudioManager.MODE_IN_COMMUNICATION ||
-                            mode == android.media.AudioManager.MODE_IN_CALL
-            ) {
-                trySetStartTime()
-            } else {
-                // Also check Telephony directly just in case AudioManager is delayed
-                // accessing telephonyManager.callState requires READ_PHONE_STATE permission
-                // If not granted, this might throw SecurityException
-                try {
-                    val callState = telephonyManager.callState
-                    if (callState == android.telephony.TelephonyManager.CALL_STATE_IDLE) {
-                        // Really Idle
-                        callStartTime = null
-                    }
-                } catch (e: SecurityException) {
-                    // Permission not granted, ignore or handle gracefully
-                    // If we can't check, we assume state hasn't changed from audioManager
-                }
+        if (mode == android.media.AudioManager.MODE_IN_COMMUNICATION ||
+                        mode == android.media.AudioManager.MODE_IN_CALL
+        ) {
+            if (voipCallStartTime == null) {
+                voipCallStartTime = System.currentTimeMillis()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } else {
+            // Mode is NORMAL or RINGTONE -> No active conversation
+            voipCallStartTime = null
         }
     }
 
-    private fun trySetStartTime() {
-        if (callStartTime == null) {
-            callStartTime = System.currentTimeMillis()
+    private fun isCallConditionMet(): Boolean {
+        val now = System.currentTimeMillis()
+
+        // Check SIM Call
+        if (simCallStartTime != null) {
+            val duration = now - simCallStartTime!!
+            if (duration > CALL_DURATION_THRESHOLD_MS) return true
         }
+
+        // Check VoIP/Audio Mode Call
+        if (voipCallStartTime != null) {
+            val duration = now - voipCallStartTime!!
+            if (duration > CALL_DURATION_THRESHOLD_MS) return true
+        }
+
+        return false
     }
 
     override fun onInterrupt() {
