@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.brawlhouse.familyguard.data.*  // เพิ่มตามที่ขอ (รวม FamilyMember, JoinFamilyRequest ฯลฯ)
+import com.brawlhouse.familyguard.data.*
 import com.brawlhouse.familyguard.data.LoginRequest
 import com.brawlhouse.familyguard.data.RegisterRequest
 import com.brawlhouse.familyguard.data.RetrofitClient
@@ -35,7 +35,8 @@ class MainViewModel : ViewModel() {
 
     // เก็บ Invite Code ของครอบครัวเรา
     var myInviteCode by mutableStateOf("")
-
+    var joinCodeInput by mutableStateOf("")
+    
     // UI Control
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
@@ -57,6 +58,9 @@ class MainViewModel : ViewModel() {
     fun onRegPasswordChange(v: String) { regPassword = v }
     fun onRegBankChange(v: String) { regBankAccount = v }
     fun onRegRoleChange(v: String) { regRole = v }
+    
+    // Function สำหรับ input join code
+    fun onJoinCodeChange(v: String) { joinCodeInput = v }
 
     fun navigateTo(screen: Screen) {
         _currentScreen.value = screen
@@ -151,17 +155,20 @@ class MainViewModel : ViewModel() {
     }
 
     // 2. เข้าร่วมครอบครัว
-    fun joinFamily(code: String) {
-        if (code.isBlank()) return
+    fun joinFamily() { 
+        if (joinCodeInput.isBlank()) return // เช็คจากตัวแปรที่พิมพ์
 
         viewModelScope.launch {
             isLoading = true
             try {
-                val response = RetrofitClient.instance.joinFamily(JoinFamilyRequest(code))
+                // ส่งค่าที่พิมพ์ไปให้ API
+                val response = RetrofitClient.instance.joinFamily(JoinFamilyRequest(joinCodeInput))
                 if (response.isSuccessful) {
-                    navigateTo(Screen.Dashboard)  // เข้าเสร็จไปหน้า Dashboard
+                    // เข้าร่วมสำเร็จ -> ไปโหลดข้อมูลใหม่ แล้วเข้า Dashboard
+                    loadFamilyData() 
+                    navigateTo(Screen.Dashboard)
                 } else {
-                    errorMessage = "Invalid Invite Code"
+                    errorMessage = "รหัสไม่ถูกต้อง หรือเข้าร่วมไม่ได้"
                 }
             } catch (e: Exception) {
                 errorMessage = e.message
@@ -174,16 +181,29 @@ class MainViewModel : ViewModel() {
     // 3. ดึงข้อมูลสมาชิก (ใช้ใน Dashboard)
     fun loadFamilyData() {
         viewModelScope.launch {
+            // เริ่มต้นต้องบอกว่ากำลังโหลด และเคลียร์ error เก่า
+            isLoading = true
+            errorMessage = null
+
             try {
                 val response = RetrofitClient.instance.getFamilyMembers()
                 if (response.isSuccessful) {
                     val body = response.body()
                     _familyMembers.value = body?.members ?: emptyList()
                     myInviteCode = body?.inviteCode ?: ""
+                } else {
+                    // ถ้า User 2 ยังไม่มีกลุ่ม Server อาจส่ง error กลับมา
+                    // เราต้องเคลียร์ InviteCode ให้เป็นว่าง UI จะได้รู้ว่า "อ๋อ คนนี้ยังไม่มีกลุ่ม"
+                    myInviteCode = ""
+                    _familyMembers.value = emptyList()
                 }
             } catch (e: Exception) {
-                // Handle error (อาจตั้ง errorMessage ถ้าต้องการแจ้งผู้ใช้)
                 errorMessage = e.message
+                // ถ้า Error ก็เคลียร์ Code ทิ้งเหมือนกัน
+                myInviteCode = ""
+            } finally {
+                // สำคัญที่สุด! บรรทัดนี้จะทำให้คำว่า "Loading..." หายไป
+                isLoading = false
             }
         }
     }
@@ -199,4 +219,44 @@ class MainViewModel : ViewModel() {
             }
         }
     }
-}
+
+    fun clearData() {
+        email = ""
+        password = ""
+        myInviteCode = ""
+        _familyMembers.value = emptyList()
+        errorMessage = null
+        RetrofitClient.authToken = null // สำคัญมาก: เคลียร์ Token ที่จำไว้ใน object
+        
+        // ถ้าต้องการเคลียร์ฟอร์มสมัครสมาชิกด้วย ก็เพิ่มบรรทัดพวกนี้ได้ครับ
+        regNickname = ""
+        regEmail = ""
+        regPassword = ""
+    }
+
+    fun logout() {
+        // 1. ล้างข้อมูล State ทั้งหมด
+        email = ""
+        password = ""
+        
+        // ล้างข้อมูล Register (เผื่อคนใหม่จะสมัคร)
+        regNickname = ""
+        regEmail = ""
+        regPassword = ""
+        regBankAccount = ""
+        
+        // ล้างข้อมูล Family
+        myInviteCode = ""
+        joinCodeInput = "" // <--- ล้างช่องกรอกรหัสด้วย
+        _familyMembers.value = emptyList()
+        
+        // 2. ล้าง Token และ Error
+        errorMessage = null
+        isLoading = false
+        RetrofitClient.authToken = null 
+
+        // 3. ดีดกลับไปหน้า Login
+        navigateTo(Screen.Login)
+    }
+
+} 

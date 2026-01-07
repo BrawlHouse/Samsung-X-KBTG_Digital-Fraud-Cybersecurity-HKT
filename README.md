@@ -3,3 +3,7 @@
 
 .\gradlew clean
 .\gradlew :app:installDebug
+
+
+
+RNAKN5
