@@ -38,6 +38,7 @@ import com.brawlhouse.familyguard.ui.theme.Success
 import com.brawlhouse.familyguard.ui.theme.Warning
 import com.brawlhouse.familyguard.viewmodel.MainViewModel
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
@@ -72,6 +73,7 @@ fun DashboardScreen(
                 ) {
                     Column {
                         Text("Family Safety", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 "Invite Code: ${myInviteCode.ifBlank { "Loading..." }}",
@@ -90,9 +92,18 @@ fun DashboardScreen(
                             }
                         }
                     }
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Outlined.Settings, "Settings", tint = MaterialTheme.colorScheme.primary)
-                    }
+                   IconButton(onClick = onSettingsClick) {
+                            Icon(Icons.Outlined.Settings, "Settings", tint = MaterialTheme.colorScheme.primary)
+                        }
+                        
+                        // [เพิ่มใหม่] ปุ่ม Logout
+                        IconButton(onClick = { viewModel.logout() }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp, // ไอคอนประตูทางออก
+                                contentDescription = "Logout",
+                                tint = MaterialTheme.colorScheme.error // สีแดงให้รู้ว่าเป็นปุ่มออก
+                            )
+                        }
                 }
             },
             containerColor = MaterialTheme.colorScheme.background
