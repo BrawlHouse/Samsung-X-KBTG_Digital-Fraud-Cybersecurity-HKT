@@ -1,47 +1,32 @@
-version: '3.8'
-
 services:
-  # 1. ส่วนของ Database (MySQL)
-  mysqldb:
-    image: mysql:8.0
-    container_name: scam_guard_mysql
+  db:
+    image: mysql:8.4
+    container_name: db
     restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: poom1234
-      MYSQL_DATABASE: scam_guard_db
+    env_file:
+      - .env
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - db:/var/lib/mysql
     networks:
-      - scam_guard_network
+      - backend
 
-  # 2. ส่วนของ Backend (Node.js)
   backend:
     build: ./backend
-    container_name: scam_guard_backend
+    container_name: backend
     restart: always
+    env_file:
+    - ./backend/.env
     ports:
       - "3000:3000"
     depends_on:
-      - mysqldb
-    environment:
-      DB_HOST: mysqldb 
-      DB_USER: root
-      DB_PASS: poom1234
-      DB_NAME: scam_guard_db
-      PORT: 3000
-      JWT_SECRET: super_secret_scam_guard_key_change_me
-    volumes:
-      - ./backend:/app          # แก้จาก .:/app เป็น ./backend:/app
-      - /app/node_modules       # เพื่อไม่ให้ node_modules ในเครื่องไปทับใน container
+      - db
     networks:
-      - scam_guard_network
+      - backend
 
-# กำหนดชื่อ Network ที่จะใช้
 networks:
-  scam_guard_network:
-    driver: bridge
+  backend:
 
 volumes:
-  mysql_data:
+  db:
