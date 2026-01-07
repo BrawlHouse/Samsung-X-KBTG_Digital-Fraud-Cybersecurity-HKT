@@ -1,6 +1,6 @@
 package com.brawlhouse.familyguard.ui.screens
 
-import androidx.compose.foundation.BorderStroke  // ใช้แค่อันนี้เท่านั้น
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -9,7 +9,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AddCircle
-import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,9 +30,13 @@ fun InviteScreen(
     viewModel: MainViewModel,
     onBackClick: () -> Unit = {}
 ) {
-    var inviteCode by remember { mutableStateOf("") }
-    val isLoading = viewModel.isLoading
-    val errorMessage = viewModel.errorMessage  // ใช้ .value เพราะเป็น mutableStateOf
+    val isLoading by remember { derivedStateOf { viewModel.isLoading } }
+    val errorMessage by remember { derivedStateOf { viewModel.errorMessage } }
+    val inviteCode by remember { derivedStateOf { viewModel.myInviteCode } }
+    val joinCodeInput = viewModel.joinCodeInput
+    LaunchedEffect(Unit) {
+        viewModel.loadFamilyData()
+    }
 
     Scaffold(
         topBar = {
@@ -90,6 +93,7 @@ fun InviteScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // ปุ่มสร้าง Family
             Button(
                 onClick = { viewModel.createFamily() },
                 enabled = !isLoading,
@@ -113,7 +117,7 @@ fun InviteScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                HorizontalDivider(modifier = Modifier.weight(1f))
+                Divider(modifier = Modifier.weight(1f))
                 Text(
                     " OR JOIN WITH CODE ",
                     fontSize = 12.sp,
@@ -121,57 +125,72 @@ fun InviteScreen(
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
-                HorizontalDivider(modifier = Modifier.weight(1f))
+                Divider(modifier = Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Card แสดง Invite Code + Join
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                border = BorderStroke(1.dp, Color(0xFFE2E8F0))  // ใช้จาก foundation
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text("Have an invite code?", fontWeight = FontWeight.SemiBold)
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = inviteCode,
-                        onValueChange = { inviteCode = it.uppercase() },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        placeholder = {
-                            Text(
-                                "EX: A38-9Z2",
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        },
-                        textStyle = LocalTextStyle.current.copy(
-                            textAlign = TextAlign.Center,
-                            fontSize = 18.sp,
+                Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    
+                    // 1. ถ้ามี Invite Code (เป็นคนสร้างบ้าน) ให้โชว์
+                    // แต่ถ้าไม่มี (เป็นคนจะขอเข้า) ให้โชว์ช่องกรอก
+                    
+                    if (inviteCode.isNotBlank()) {
+                        Text("Your Invite Code", fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = inviteCode,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp
-                        ),
-                        trailingIcon = { Icon(Icons.Outlined.Key, null, tint = Color.Gray) },
-                        singleLine = true
-                    )
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        Text("Join an existing family", fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // [เพิ่มช่องกรอก]
+                        OutlinedTextField(
+                            value = joinCodeInput,
+                            onValueChange = { viewModel.onJoinCodeChange(it) },
+                            label = { Text("Enter Invite Code") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = Color.LightGray
+                            )
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // ปุ่ม Join
                     Button(
-                        onClick = { viewModel.joinFamily(inviteCode.trim()) },
-                        enabled = !isLoading && inviteCode.isNotBlank(),
+                        // เปลี่ยนไปเรียกฟังก์ชัน joinFamily แบบไม่ต้องส่ง param (เพราะใช้ตัวแปรใน ViewModel)
+                        onClick = { viewModel.joinFamily() }, 
+                        // ปุ่มจะกดได้ก็ต่อเมื่อ "User พิมพ์รหัสแล้ว" (joinCodeInput ไม่ว่าง)
+                        enabled = !isLoading && joinCodeInput.isNotBlank(),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = MaterialTheme.colorScheme.primary // เปลี่ยนสีให้เด่นหน่อย
                         )
                     ) {
-                        Text("Join Family", fontWeight = FontWeight.Bold)
+                        if (isLoading) {
+                             CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
+                        } else {
+                             Text("Join Family", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
