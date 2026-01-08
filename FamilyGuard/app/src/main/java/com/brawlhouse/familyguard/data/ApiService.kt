@@ -10,52 +10,51 @@ import retrofit2.http.Path
 
 // --- Existing Login Models (ของเดิม) ---
 data class LoginRequest(val email: String, val password: String)
+
 data class LoginResponse(
-    val message: String,
-    val token: String?,
-    val user: UserData?,
-    val error: String?
+        val message: String,
+        val token: String?,
+        val user: UserData?,
+        val error: String?
 )
+
 data class UserData(
-    @SerializedName("user_id") val userId: Int,
-    val nickname: String,
-    val role: String,
-    val email: String
+        @SerializedName("user_id") val userId: Int,
+        val nickname: String,
+        val role: String,
+        val email: String
 )
 
 // --- NEW: Register Models (เพิ่มใหม่) ---
 data class RegisterRequest(
-    val email: String,
-    val password: String,
-    val nickname: String,
-    val role: String, // "parent" or "child"
-    @SerializedName("device_id") val deviceId: String,
-    @SerializedName("bank_account_number") val bankAccountNumber: String
+        val email: String,
+        val password: String,
+        val nickname: String,
+        val role: String, // "parent" or "child"
+        @SerializedName("device_id") val deviceId: String,
+        @SerializedName("bank_account_number") val bankAccountNumber: String
 )
 
 data class RegisterResponse(
-    val message: String,
-    val user: UserData?, // Reuse UserData
-    val error: String?
+        val message: String,
+        val user: UserData?, // Reuse UserData
+        val error: String?
 )
 
 // --- Interface ---
 interface ApiService {
-    @POST("users/login")
-    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+    @POST("users/login") suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     // เพิ่มฟังก์ชัน Register
     @POST("users/register")
     suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    @POST("family/create")
-    suspend fun createFamily(): Response<CreateFamilyResponse>
+    @POST("family/create") suspend fun createFamily(): Response<CreateFamilyResponse>
 
     @POST("family/join")
     suspend fun joinFamily(@Body request: JoinFamilyRequest): Response<GeneralResponse>
 
-    @GET("family/members")
-    suspend fun getFamilyMembers(): Response<GetMembersResponse>
+    @GET("family/members") suspend fun getFamilyMembers(): Response<GetMembersResponse>
 
     @DELETE("family/members/{user_id}")
     suspend fun removeMember(@Path("user_id") userId: Int): Response<GeneralResponse>
@@ -63,8 +62,10 @@ interface ApiService {
     @POST("risk/analyze")
     suspend fun analyzeRisk(@Body request: AnalyzeRequest): Response<AnalyzeResponse>
     @POST("risk/respond")
-    suspend fun respondToTransaction(@Body request: RespondTransactionRequest): Response<GeneralResponse>
+    suspend fun respondToTransaction(
+            @Body request: RespondTransactionRequest
+    ): Response<GeneralResponse>
     // อัปเดต FCM Token เพื่อให้ Backend รู้ว่าเครื่องไหนคือใคร
-    @POST("users/update-fcm-token")
+    @POST("users/fcm-token")
     suspend fun updateFcmToken(@Body request: UpdateTokenRequest): Response<GeneralResponse>
 }
