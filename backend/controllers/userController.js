@@ -55,7 +55,8 @@ exports.register = async (req, res) => {
                 user_id: newUser.user_id,
                 nickname: newUser.nickname,
                 email: newUser.email,
-                role: newUser.role
+                role: newUser.role,
+                status: newUser.status
             }
         });
 
@@ -103,7 +104,8 @@ exports.login = async (req, res) => {
                 nickname: user.nickname,
                 role: user.role,
                 family_id: user.family_id,
-                bank_account_number: user.bank_account_number
+                bank_account_number: user.bank_account_number,
+                status: user.status
             }
         });
 
@@ -179,4 +181,56 @@ exports.updateFcmToken = async (req, res) => {
         console.error('Update Token Error:', error);
         res.status(500).json({ error: 'Server error', details: error.message });
     }
+};
+
+
+
+
+exports.updateUserStatus = async (req, res) => {
+  try {
+    // รับค่าจาก Body
+    const { user_id, status } = req.body;
+
+    // 1. Validate Input เบื้องต้น
+    const validStatuses = ['allow', 'reject', 'waiting', 'normal'];
+    if (!user_id || !status) {
+      return res.status(400).json({ error: "Please provide user_id and status" });
+    }
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid status value" });
+    }
+
+    // 2. หา User เป้าหมาย
+    const targetUser = await User.findByPk(user_id);
+    if (!targetUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 3. [สำคัญ] Business Logic: Child ต้องเป็น normal ตลอดกาล
+    // ถ้าเป้าหมายเป็น Child และพยายามจะแก้เป็นค่าอื่นที่ไม่ใช่ normal -> ห้าม
+    if (targetUser.role === 'child' && status !== 'normal') {
+      return res.status(403).json({ 
+        error: "Cannot change status of a 'child' user. They must remain 'normal'." 
+      });
+    }
+
+    // 4. อัปเดตสถานะ
+    targetUser.status = status;
+    await targetUser.save();
+
+    // 5. ส่งผลลัพธ์กลับ
+    return res.status(200).json({
+      message: "Status updated successfully",
+      user: {
+        user_id: targetUser.user_id,
+        nickname: targetUser.nickname,
+        role: targetUser.role,
+        status: targetUser.status
+      }
+    });
+
+  } catch (error) {
+    console.error("Error updating status:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 };

@@ -206,80 +206,9 @@ router.get('/members', authMiddleware, familyController.getMembers);
 
 
 
-
 /**
  * @swagger
- * /family/members/{user_id}:
- *   delete:
- *     summary: Remove a member from the family
- *     tags: [Family]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: user_id
- *         required: true
- *         schema:
- *           type: integer
- *         example: 5
- *     responses:
- *       200:
- *         description: Member removed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Member removed successfully
- *       400:
- *         description: User is not in a family
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: You are not in a family
- *       403:
- *         description: Forbidden (no permission or different family)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Cannot remove user from another family
- *       404:
- *         description: Target user not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: User not found
- *       401:
- *         description: Unauthorized
- *       500:
- *         description: Internal server error
- */
-
-// 4. ลบสมาชิก (DELETE /family/members/:user_id)
-// ส่ง ID ของคนที่จะลบไปใน URL
-router.delete('/members/:user_id', authMiddleware, familyController.removeMember);
-
-
-
-
-
-/**
- * @swagger
- * /members/child:
+ * /family/members/child:
  *   get:
  *     summary: Get all children in the same family
  *     description: >
@@ -350,5 +279,76 @@ router.delete('/members/:user_id', authMiddleware, familyController.removeMember
  */
 
 router.get('/members/child', authMiddleware, familyController.getFamilyChildren);
+
+
+
+/**
+ * @swagger
+ * /family/members/{user_id}:
+ *   delete:
+ *     summary: Remove a member from the family
+ *     tags: [Family]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 5
+ *     responses:
+ *       200:
+ *         description: Member removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Member removed successfully
+ *       400:
+ *         description: User is not in a family
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: You are not in a family
+ *       403:
+ *         description: Forbidden (no permission or different family)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Cannot remove user from another family
+ *       404:
+ *         description: Target user not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: User not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+// 4. ลบสมาชิก (DELETE /family/members/:user_id)
+// ส่ง ID ของคนที่จะลบไปใน URL
+router.delete('/members/:user_id', authMiddleware, familyController.removeMember);
+
+
+
 
 module.exports = router;
