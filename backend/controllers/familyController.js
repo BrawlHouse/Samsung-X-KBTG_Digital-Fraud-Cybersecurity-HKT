@@ -162,3 +162,46 @@ exports.removeMember = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+
+
+exports.getFamilyChildren = async (req, res) => {
+  try {
+    // 1. แกะ ID คนเรียกมาจาก JWT (Middleware ทำให้แล้ว)
+    const myId = req.user.id; 
+    
+    // 2. หาข้อมูลของคนเรียกก่อน เพื่อเอา family_id
+    // (สมมติใช้ Sequelize หรือ ORM อื่นๆ)
+    const me = await User.findByPk(myId);
+
+    if (!me || !me.family_id) {
+      return res.status(404).json({ error: "User or Family not found" });
+    }
+
+    const myFamilyId = me.family_id;
+
+    // 3. Query หาพี่น้อง/ลูกหลาน ตามเงื่อนไข
+    // เงื่อนไข: family เดียวกัน + เป็น CHILD + ไม่ใช่ตัวฉันเอง
+    const children = await User.findAll({
+      where: {
+        family_id: myFamilyId,     // 1. บ้านเดียวกัน
+        role: 'child',             // 2. เอาเฉพาะเด็ก (ไม่เอา Parent)
+        id: { [Op.ne]: myId }      // 3. id ต้องไม่เท่ากับ (Not Equal) ฉัน
+      },
+      attributes: ['user_id', 
+        'nickname', 
+        'email', 
+        'role',] 
+    });
+
+    // 4. ส่ง response
+    return res.json({
+      family_id: myFamilyId,
+      users: children
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Server Error" });
+  }
+};

@@ -99,7 +99,8 @@ router.use(authMiddleware);
  *                   type: string
  *                   example: Internal Server Error
  */
-router.post('/analyze', riskController.analyze);
+// Route สำหรับวิเคราะห์ความเสี่ยง (พ่อแม่ส่ง Survey)
+router.post('/analyze', authMiddleware, riskController.analyze);
 
 
 
@@ -170,7 +171,9 @@ router.post('/analyze', riskController.analyze);
  *                   type: string
  *                   example: Transaction not found
  */
-router.post('/respond', riskController.respondToTransaction);
+// Route สำหรับลูกตอบกลับ (Approve/Reject)
+// ต้องแน่ใจว่า riskController มี function ชื่อ respondToTransaction
+router.post('/respond', authMiddleware, riskController.respondToTransaction);
 
 
 module.exports = router;
