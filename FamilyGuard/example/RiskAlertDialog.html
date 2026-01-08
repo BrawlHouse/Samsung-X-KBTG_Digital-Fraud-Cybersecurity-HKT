@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Family Risk Alert Popup</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee8c2b",
+                        "background-light": "#f8f7f6",
+                        "background-dark": "#221910",
+                        "danger": "#DC2626", // Added for the reject button
+                        "danger-hover": "#B91C1C",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    boxShadow: {
+                        'glow': '0 0 20px -5px rgba(238, 140, 43, 0.3)',
+                        'glow-danger': '0 0 20px -5px rgba(220, 38, 38, 0.3)',
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark overflow-hidden h-screen w-full relative">
+    <div aria-hidden="true" class="absolute inset-0 z-0 flex flex-col h-full w-full pointer-events-none">
+        <header
+            class="h-16 flex items-center justify-between px-5 bg-white dark:bg-[#1a120b] border-b border-gray-100 dark:border-gray-800">
+            <span class="text-lg font-bold text-[#181411] dark:text-white">Family Safety</span>
+            <div class="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+        </header>
+        <div class="flex-1 relative bg-gray-100 dark:bg-[#120d08]">
+            <div class="absolute inset-0 bg-cover bg-center opacity-40 grayscale"
+                data-alt="Blurred map background of a city street layout" data-location="City Map View"
+                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDHrigB_WkWc38M35evMPEo38QKqZH0RN8aYQZhtq7nrEKx9p5J9zLlsvvVCKM-A5HwZIdcGcG6Wkr1--J_TCoEbdj6MbrtOc7dsptJ0oHYDHwT1guJNHT2SREA6xe42ghnwfFSM3-CfDffow_zgGuWiA22LHhWgvUrSBaeSuFBeK1JzeX22cOIq2NTLPIN5GlyEARHoBX6IEeRDRHnhbJl7o7fqL9uEb4-YsPLhPXojOMfwA1HZdGy42Knakm-0Z3EZfjh3ifK5g");'>
+            </div>
+            <div
+                class="absolute bottom-24 right-5 h-12 w-12 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center">
+                <span class="material-symbols-outlined text-gray-600 dark:text-gray-300">my_location</span>
+            </div>
+        </div>
+        <div
+            class="h-20 bg-white dark:bg-[#1a120b] border-t border-gray-100 dark:border-gray-800 flex justify-around items-center px-6 pb-4">
+            <div class="flex flex-col items-center gap-1 opacity-50">
+                <span class="material-symbols-outlined">home</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 text-primary">
+                <span class="material-symbols-outlined">security</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 opacity-50">
+                <span class="material-symbols-outlined">group</span>
+            </div>
+        </div>
+    </div>
+    <div class="absolute inset-0 bg-[#181411]/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
+        <div
+            class="w-full max-w-[340px] md:max-w-[380px] bg-white dark:bg-[#2c241b] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden transform transition-all animate-[fade-in_0.3s_ease-out]">
+            <div class="pt-8 px-6 pb-4 flex flex-col items-center text-center relative">
+                <div class="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 shadow-glow">
+                    <span class="material-symbols-outlined text-primary text-[32px]">warning</span>
+                </div>
+                <h2 class="text-[#181411] dark:text-white text-2xl font-bold leading-tight mb-2">
+                    Potential Risk Detected
+                </h2>
+                <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
+                    <div
+                        class="flex h-7 shrink-0 items-center justify-center gap-x-1.5 rounded-full bg-primary/10 pl-3 pr-3 border border-primary/20">
+                        <span class="material-symbols-outlined text-primary text-[16px]">family_star</span>
+                        <p class="text-primary text-xs font-bold uppercase tracking-wide leading-none pt-0.5">Father</p>
+                    </div>
+                    <span class="text-sm text-[#897561] dark:text-gray-400 font-medium">is currently on a call</span>
+                </div>
+            </div>
+            <div class="px-5 pb-2">
+                <div
+                    class="bg-background-light dark:bg-[#221910] rounded-xl border border-[#e6e0db] dark:border-[#3d3228] p-4 flex flex-col gap-4">
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="mt-0.5 h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center shrink-0">
+                            <span
+                                class="material-symbols-outlined text-gray-500 dark:text-gray-400 text-lg">person_alert</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[#897561] dark:text-gray-400 text-xs font-normal leading-tight">Contact
+                                Name</span>
+                            <span class="text-[#181411] dark:text-gray-100 text-base font-bold leading-tight">Unknown
+                                Caller</span>
+                            <span class="text-[#897561] dark:text-gray-500 text-sm font-normal leading-normal mt-0.5">+1
+                                (555) 019-2834</span>
+                        </div>
+                    </div>
+                    <div class="h-px w-full bg-[#e6e0db] dark:bg-[#3d3228]"></div>
+                    <div class="flex items-start gap-3">
+                        <div
+                            class="mt-0.5 h-8 w-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-lg">policy</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[#897561] dark:text-gray-400 text-xs font-normal leading-tight">Risk
+                                Assessment</span>
+                            <p
+                                class="text-[#181411] dark:text-gray-200 text-sm font-medium leading-snug mt-1 bg-primary/5 dark:bg-primary/10 p-2 rounded text-primary-900 dark:text-primary-100 border-l-2 border-primary">
+                                Caller claims to be a government officer demanding payment.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 pt-4 flex flex-col items-center gap-5">
+                <p class="text-[#897561] dark:text-gray-400 text-sm font-normal leading-normal text-center">
+                    Please confirm if this activity should be blocked to ensure safety.
+                </p>
+                <div class="w-full flex flex-col gap-3">
+                    <button
+                        class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-danger hover:bg-danger-hover active:bg-red-800 transition-colors text-white text-base font-bold leading-normal tracking-[0.015em] shadow-lg shadow-red-500/20">
+                        <span class="truncate">Reject</span>
+                    </button>
+                    <button
+                        class="text-xs text-[#897561] dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline underline-offset-2 transition-colors">
+                        Allow
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

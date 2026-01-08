@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Multi-Step Survey Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#197fe6",
+                        "primary-dark": "#166cc4",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+
+        input[type="radio"]:checked+div {
+            border-color: #197fe6;
+            background-color: rgba(25, 127, 230, 0.05);
+        }
+
+        input[type="radio"]:checked+div .radio-indicator {
+            border-color: #197fe6;
+            background-color: #197fe6;
+            box-shadow: inset 0 0 0 3px white;
+        }
+
+        .dark input[type="radio"]:checked+div .radio-indicator {
+            box-shadow: inset 0 0 0 3px #1f2937;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display flex items-center justify-center min-h-screen p-0 sm:p-4">
+    <div
+        class="relative flex w-full max-w-md flex-col bg-white dark:bg-[#111921] sm:rounded-2xl shadow-2xl overflow-hidden h-screen sm:h-auto sm:max-h-[90vh]">
+        <div
+            class="bg-white dark:bg-[#111921] px-6 pt-6 pb-2 border-b border-gray-100 dark:border-gray-800 z-10 sticky top-0">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <span
+                        class="material-symbols-outlined text-orange-600 dark:text-orange-500 text-[28px]">shield_person</span>
+                    <span class="text-sm font-bold uppercase tracking-widest text-gray-700 dark:text-gray-200">Safety
+                        Check</span>
+                </div>
+                <button aria-label="Close survey"
+                    class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
+                </button>
+            </div>
+            <div aria-label="Step 2 of 5" class="flex gap-1.5 mb-2">
+                <div class="h-1.5 flex-1 rounded-full bg-primary"></div>
+                <div class="h-1.5 flex-1 rounded-full bg-primary"></div>
+                <div class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                <div class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+            <div
+                class="flex justify-between text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                <span>Progress</span>
+                <span>Step 2/5</span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-6 pb-8">
+            <div class="mb-8">
+                <h2
+                    class="text-[#111418] dark:text-white text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight mb-2">
+                    How were you contacted?
+                </h2>
+                <p class="text-gray-500 dark:text-gray-400 text-base leading-relaxed">
+                    Please specify the method used by the caller to reach you.
+                </p>
+            </div>
+            <form class="flex flex-col gap-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="cursor-pointer group relative">
+                        <input class="peer sr-only" name="contact_method" type="radio" />
+                        <div
+                            class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 hover:bg-white hover:border-gray-300 dark:hover:border-gray-600 transition-all h-full text-center">
+                            <div
+                                class="radio-indicator w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-500 mb-3 transition-colors">
+                            </div>
+                            <span class="material-symbols-outlined text-gray-600 dark:text-gray-300 mb-2">call</span>
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">Phone Call</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer group relative">
+                        <input class="peer sr-only" name="contact_method" type="radio" />
+                        <div
+                            class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 hover:bg-white hover:border-gray-300 dark:hover:border-gray-600 transition-all h-full text-center">
+                            <div
+                                class="radio-indicator w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-500 mb-3 transition-colors">
+                            </div>
+                            <span class="material-symbols-outlined text-gray-600 dark:text-gray-300 mb-2">sms</span>
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">SMS / Text</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer group relative">
+                        <input class="peer sr-only" name="contact_method" type="radio" />
+                        <div
+                            class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 hover:bg-white hover:border-gray-300 dark:hover:border-gray-600 transition-all h-full text-center">
+                            <div
+                                class="radio-indicator w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-500 mb-3 transition-colors">
+                            </div>
+                            <span class="material-symbols-outlined text-gray-600 dark:text-gray-300 mb-2">mail</span>
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">Email</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer group relative">
+                        <input class="peer sr-only" name="contact_method" type="radio" />
+                        <div
+                            class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 hover:bg-white hover:border-gray-300 dark:hover:border-gray-600 transition-all h-full text-center">
+                            <div
+                                class="radio-indicator w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-500 mb-3 transition-colors">
+                            </div>
+                            <span
+                                class="material-symbols-outlined text-gray-600 dark:text-gray-300 mb-2">chat_bubble</span>
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">Social Media</span>
+                        </div>
+                    </label>
+                </div>
+                <div class="space-y-2 mt-2">
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300" for="details">
+                        Caller ID / Sender Details
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="material-symbols-outlined text-gray-400 text-[20px]">person_search</span>
+                        </div>
+                        <input
+                            class="block w-full pl-10 pr-3 py-3 rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                            id="details" name="details" placeholder="e.g. +1 234 567 8900 or username" type="text" />
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div
+            class="p-6 pt-4 bg-white dark:bg-[#111921] border-t border-gray-100 dark:border-gray-800 z-10 sticky bottom-0">
+            <div class="flex items-center justify-between gap-4">
+                <button
+                    class="flex items-center gap-2 px-6 py-3 rounded-xl text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                    Back
+                </button>
+                <button
+                    class="flex items-center gap-2 px-8 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-95">
+                    Next
+                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
