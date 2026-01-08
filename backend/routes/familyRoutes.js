@@ -275,4 +275,80 @@ router.delete('/members/:user_id', authMiddleware, familyController.removeMember
 
 
 
+
+
+/**
+ * @swagger
+ * /members/child:
+ *   get:
+ *     summary: Get all children in the same family
+ *     description: >
+ *       ดึงรายชื่อสมาชิกที่มี role เป็น `child` ภายในครอบครัวเดียวกัน  
+ *       โดยอ้างอิง family_id จากผู้ใช้งานที่ login อยู่ (JWT Required)
+ *     tags:
+ *       - Family
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved children in the family
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 family_id:
+ *                   type: integer
+ *                   example: 101
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       user_id:
+ *                         type: integer
+ *                         example: 10
+ *                       nickname:
+ *                         type: string
+ *                         example: Ninja
+ *                       email:
+ *                         type: string
+ *                         example: ninja@email.com
+ *                       role:
+ *                         type: string
+ *                         example: child
+ *       401:
+ *         description: Unauthorized (missing or invalid JWT)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Unauthorized
+ *       404:
+ *         description: User or family not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: User or Family not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Server Error
+ */
+
+router.get('/members/child', authMiddleware, familyController.getFamilyChildren);
+
 module.exports = router;
