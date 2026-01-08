@@ -9,8 +9,11 @@ const serviceAccount = require(
   path.resolve(process.env.FIREBASE_KEY_PATH)
 );
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+// เช็คก่อนว่า Initialize ไปหรือยัง เพื่อป้องกัน Error ซ้ำ
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
 
 module.exports = admin;

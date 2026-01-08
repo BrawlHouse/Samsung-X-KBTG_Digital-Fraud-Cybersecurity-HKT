@@ -159,18 +159,21 @@ exports.getUserInfo = async (req, res) => {
 exports.updateFcmToken = async (req, res) => {
     try {
         const { token } = req.body;
-        const user_id = req.user.user_id; // ได้มาจาก authMiddleware
+        // req.user.user_id มาจาก authMiddleware
+        const user_id = req.user.user_id; 
 
         if (!token) {
-            return res.status(400).json({ error: 'Device token is required' });
+            return res.status(400).json({ error: 'FCM Token is required' });
         }
 
-        // อัปเดตลง Database
+        console.log(`🔄 Updating FCM Token for User ID: ${user_id}`);
+
+        // Update Token ลง Database
         await User.update({ fcm_token: token }, {
             where: { user_id: user_id }
         });
 
-        res.json({ message: 'Device token updated successfully' });
+        res.json({ message: 'FCM Token updated successfully' });
 
     } catch (error) {
         console.error('Update Token Error:', error);

@@ -3,10 +3,13 @@ services:
     image: mysql:8.4
     container_name: db
     restart: always
-    env_file:
-      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: SuperSecurePassword123!  # สำหรับ root
+      MYSQL_DATABASE: scam_guard_prod
+      MYSQL_USER: test_user                            # user ปกติ
+      MYSQL_PASSWORD: TestPassword123!                 # รหัส user ปกติ
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db:/var/lib/mysql
     networks:
@@ -22,8 +25,11 @@ services:
     build: ./backend
     container_name: backend
     restart: always
-    env_file:
-    - ./backend/.env
+    environment:
+      DB_HOST: db
+      DB_USER: test_user
+      DB_PASS: TestPassword123!
+      DB_NAME: scam_guard_prod
     ports:
       - "3000:3000"
     depends_on:

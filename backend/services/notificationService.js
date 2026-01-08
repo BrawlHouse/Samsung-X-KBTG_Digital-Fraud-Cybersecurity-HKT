@@ -1,47 +1,44 @@
-const admin = require('../config/firebase'); // เรียกใช้ตัวที่เรา config ไว้ตอนแรก
+    const admin = require('../config/firebase');
 
-const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => {
-    if (!fcmToken) {
-        console.log("No FCM Token provided, skipping notification.");
-        return;
-    }
-    
-    // สร้าง Payload ข้อความตามมาตรฐาน FCM
-    const message = {
-        notification: {
-            title: title,
-            body: body
-        },
-        // data เอาไว้ส่งค่า transaction_id แฝงไปกับแจ้งเตือน (user ไม่เห็น แต่แอปเอาไปใช้ต่อได้)
-        data: dataPayload, 
-        token: fcmToken,
+    const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => {
+        if (!fcmToken) {
+            console.warn("⚠️ No FCM Token provided. Skipping notification.");
+            return;
+        }
         
-        // ตั้งค่า Priority สูงสุด เพื่อให้แจ้งเตือนเด้งทันที
-        android: {
-            priority: 'high',
+        // แปลง value ใน dataPayload ให้เป็น String ทั้งหมด (Firebase บังคับ)
+        const stringifiedData = {};
+        for (const key in dataPayload) {
+            stringifiedData[key] = String(dataPayload[key]);
+        }
+
+        const message = {
+            token: fcmToken,
             notification: {
-                channelId: 'fraud_alert_channel', // (Optional) ตั้งชื่อ Channel สำหรับ Android
-                sound: 'default'
-            }
-        },
-        apns: {
-            payload: {
-                aps: {
+                title: title,
+                body: body
+            },
+            // Data Payload: Android จะได้รับสิ่งนี้ใน onMessageReceived
+            data: stringifiedData, 
+            android: {
+                priority: 'high',
+                notification: {
+                    channelId: 'fraud_alert_channel',
                     sound: 'default',
-                    contentAvailable: true
+                    priority: 'high', // Heads-up notification
+                    visibility: 'public'
                 }
             }
+        };
+        
+        try {
+            const response = await admin.messaging().send(message);
+            console.log('✅ Notification sent successfully:', response);
+            return response;
+        } catch (error) {
+            console.error('❌ Error sending notification:', error);
+            // ไม่ throw error เพื่อให้ process หลักทำงานต่อได้
         }
     };
-    
-    try {
-        const response = await admin.messaging().send(message);
-        console.log('Successfully sent message:', response);
-        return response;
-    } catch (error) {
-        console.error('Error sending message:', error);
-        // ไม่ throw error เพื่อไม่ให้กระทบ Flow หลัก (แค่แจ้งเตือนไม่ไป แต่ Transaction ยังทำงานต่อ)
-    }
-};
 
-module.exports = { sendPushNotification };
+    module.exports = { sendPushNotification };

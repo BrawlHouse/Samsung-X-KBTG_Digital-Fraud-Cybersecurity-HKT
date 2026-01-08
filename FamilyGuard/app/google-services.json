@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "955455554876",
+    "project_id": "fraud-detection-app-82180",
+    "storage_bucket": "fraud-detection-app-82180.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:955455554876:android:2cd467667afe0bf6444a39",
+        "android_client_info": {
+          "package_name": "com.brawlhouse.familyguard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6WdPXmz02-fMspfUVM5t_VnotXEmS6d0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
