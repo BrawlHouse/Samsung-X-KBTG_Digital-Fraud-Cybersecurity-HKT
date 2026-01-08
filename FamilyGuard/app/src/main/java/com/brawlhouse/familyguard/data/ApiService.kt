@@ -59,4 +59,12 @@ interface ApiService {
 
     @DELETE("family/members/{user_id}")
     suspend fun removeMember(@Path("user_id") userId: Int): Response<GeneralResponse>
+
+    @POST("risk/analyze")
+    suspend fun analyzeRisk(@Body request: AnalyzeRequest): Response<AnalyzeResponse>
+    @POST("risk/respond")
+    suspend fun respondToTransaction(@Body request: RespondTransactionRequest): Response<GeneralResponse>
+    // อัปเดต FCM Token เพื่อให้ Backend รู้ว่าเครื่องไหนคือใคร
+    @POST("users/update-fcm-token")
+    suspend fun updateFcmToken(@Body request: UpdateTokenRequest): Response<GeneralResponse>
 }

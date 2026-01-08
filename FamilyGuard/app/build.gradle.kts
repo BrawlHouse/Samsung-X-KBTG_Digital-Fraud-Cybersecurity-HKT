@@ -1,17 +1,19 @@
+// ไฟล์: C:\...\FamilyGuard\app\build.gradle.kts (App Level)
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // เรียกใช้ Plugin ที่นี่ (ไม่ต้องใส่ version แล้ว เพราะประกาศที่ Root แล้ว)
+    id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.brawlhouse.familyguard"
-    // แก้ไขจุดที่ 1: เปลี่ยนรูปแบบการเขียน compileSdk
     compileSdk = 35
 
     defaultConfig {
         applicationId = "com.brawlhouse.familyguard"
-        // แก้ไขจุดที่ 2: ปรับ SDK ให้เสถียร (Android 15 คือ 35)
         minSdk = 29
         targetSdk = 35
         versionCode = 1
@@ -30,7 +32,6 @@ android {
         }
     }
     compileOptions {
-        // แก้ไขจุดที่ 3: ปรับเป็น Java 17 ให้แมตช์กับที่เราตั้งค่าไว้ตอนแรก
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -61,10 +62,16 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    
+    // Firebase Dependencies
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-messaging")
+    
     implementation(libs.androidx.material.icons.extended)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
+    
+    // [ลบบรรทัด classpath ออกไปแล้ว] เพราะผิดที่
 }
