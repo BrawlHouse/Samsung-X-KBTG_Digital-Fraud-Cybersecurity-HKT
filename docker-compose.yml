@@ -11,6 +11,12 @@ services:
       - db:/var/lib/mysql
     networks:
       - backend
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "test_user", "-pTestPassword123!"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   backend:
     build: ./backend
@@ -21,7 +27,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - backend
 
