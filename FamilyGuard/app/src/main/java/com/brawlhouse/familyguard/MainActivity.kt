@@ -14,7 +14,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,7 +23,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.brawlhouse.familyguard.data.MemberStatus
 import com.brawlhouse.familyguard.ui.Screen
 import com.brawlhouse.familyguard.ui.screens.*
+import com.brawlhouse.familyguard.ui.screens.DashboardScreen
+import com.brawlhouse.familyguard.ui.screens.InviteScreen
+import com.brawlhouse.familyguard.ui.screens.LoginScreen
+import com.brawlhouse.familyguard.ui.screens.RegisterScreen
+import com.brawlhouse.familyguard.ui.screens.RiskAlertDialog
+import com.brawlhouse.familyguard.ui.screens.RiskApprovalScreen
+import com.brawlhouse.familyguard.ui.screens.RiskResultScreen
 import com.brawlhouse.familyguard.ui.screens.RiskType
+import com.brawlhouse.familyguard.ui.screens.RoleSelectionScreen
+import com.brawlhouse.familyguard.ui.screens.SafetySurveyScreen
 import com.brawlhouse.familyguard.ui.theme.FamilyGuardTheme
 import com.brawlhouse.familyguard.viewmodel.MainViewModel
 
@@ -43,8 +51,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private lateinit var viewModel: MainViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel = androidx.lifecycle.ViewModelProvider(this)[MainViewModel::class.java]
 
         // 1. เช็คและขอ Notification Permission
         askNotificationPermission()
@@ -54,6 +65,9 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        // Handle Intent if opened from notification
+        handleIntent(intent)
+
         setContent {
             // ... (Content เดิมของคุณ) ...
             FamilyGuardTheme {
@@ -61,38 +75,11 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                 ) {
-                    val viewModel: MainViewModel = viewModel()
+                    // ใช้ viewModel ตัวแปร class level ได้เลย
                     val currentScreen by viewModel.currentScreen.collectAsState()
                     val showRiskDialog by viewModel.showRiskDialog.collectAsState()
 
-                    LaunchedEffect(intent) {
-                        val navToSurvey = intent.getStringExtra("NAVIGATE_TO") == "SURVEY"
-                        val isRiskAlert = intent.getStringExtra("action") == "risk_alert"
-
-                        when {
-                            navToSurvey -> {
-                                viewModel.navigateTo(Screen.Survey)
-                                intent.removeExtra("NAVIGATE_TO")
-                            }
-                            isRiskAlert -> {
-                                val txId =
-                                        intent.getStringExtra("transaction_id")?.toIntOrNull() ?: 0
-                                val nickname = intent.getStringExtra("nickname") ?: "Unknown"
-                                val rawMessage =
-                                        intent.getStringExtra("message")
-                                                ?: intent.getStringExtra("reasons") ?: "[]"
-
-                                viewModel.setRiskData(txId, nickname, rawMessage)
-
-                                intent.removeExtra("action")
-                                intent.removeExtra("transaction_id")
-                                intent.removeExtra("risk_score")
-                                intent.removeExtra("reasons")
-                                intent.removeExtra("nickname")
-                                intent.removeExtra("message")
-                            }
-                        }
-                    }
+                    // ลบ LaunchedEffect(intent) ออก เพราะย้ายไป handleIntent แล้ว
 
                     when (val screen = currentScreen) {
                         is Screen.Login ->
@@ -138,7 +125,7 @@ class MainActivity : ComponentActivity() {
                                         messages = viewModel.activeRiskMessages,
                                         transactionId = viewModel.activeRiskTransactionId,
                                         onDismissRequest = { viewModel.dismissRiskDialog() },
-                                        onRespond = { id, isAllowed ->
+                                        onRespond = { id: Int, isAllowed: Boolean ->
                                             viewModel.respondToRisk(id, isAllowed)
                                         }
                                 )
@@ -169,11 +156,37 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(
-            intent: Intent
-    ) { // แก้ไข onNewIntent ให้ถูกต้อง (ลบเครื่องหมาย ? ออกถ้า override ผิด)
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent == null) return
+
+        val navToSurvey = intent.getStringExtra("NAVIGATE_TO") == "SURVEY"
+        val isRiskAlert = intent.getStringExtra("action") == "risk_alert"
+
+        if (navToSurvey) {
+            viewModel.navigateTo(Screen.Survey)
+            intent.removeExtra("NAVIGATE_TO")
+        } else if (isRiskAlert) {
+            val txId = intent.getStringExtra("transaction_id")?.toIntOrNull() ?: 0
+            val nickname = intent.getStringExtra("nickname") ?: "Unknown"
+            val rawMessage =
+                    intent.getStringExtra("message") ?: intent.getStringExtra("reasons") ?: "[]"
+
+            viewModel.setRiskData(txId, nickname, rawMessage)
+
+            // Clear processed extras
+            intent.removeExtra("action")
+            intent.removeExtra("transaction_id")
+            intent.removeExtra("risk_score")
+            intent.removeExtra("reasons")
+            intent.removeExtra("nickname")
+            intent.removeExtra("message")
+        }
     }
 
     // ฟังก์ชันตรวจสอบสิทธิ์ Overlay

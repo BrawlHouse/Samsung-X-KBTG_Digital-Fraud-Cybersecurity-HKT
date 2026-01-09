@@ -388,16 +388,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val action = if (isAllowed) "allow" else "reject"
                 val request = RespondTransactionRequest(transactionId, action)
 
+                Log.d("RISK_RESPONSE", "Sending Respond Request: ID=$transactionId, Action=$action")
+
                 val response = RetrofitClient.instance.respondToTransaction(request)
 
+                Log.d("RISK_RESPONSE", "Response Code: ${response.code()}")
+
                 if (response.isSuccessful) {
+                    Log.d("RISK_RESPONSE", "Success: ${response.body()}")
                     // ทำรายการสำเร็จ -> ปิด Dialog / กลับหน้า Dashboard
                     _showRiskDialog.value = false
-                    // navigateTo(Screen.Dashboard) // Already likely on dashboard if using dialog
                 } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("RISK_RESPONSE", "Failed Code: ${response.code()}, Body: $errorBody")
                     errorMessage = "Failed: ${response.code()}"
                 }
             } catch (e: Exception) {
+                Log.e("RISK_RESPONSE", "Exception: ${e.message}", e)
                 errorMessage = e.message
             } finally {
                 isLoading = false

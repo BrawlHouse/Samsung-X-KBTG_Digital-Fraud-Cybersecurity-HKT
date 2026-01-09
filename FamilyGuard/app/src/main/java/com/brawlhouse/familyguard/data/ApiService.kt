@@ -6,7 +6,6 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.PUT
 import retrofit2.http.Path
 
 // --- Existing Login Models (ของเดิม) ---
@@ -89,7 +88,7 @@ interface ApiService {
 
         @POST("risk/analyze")
         suspend fun analyzeRisk(@Body request: AnalyzeRequest): Response<AnalyzeResponse>
-        @PUT("risk/respond")
+        @POST("risk/respond")
         suspend fun respondToTransaction(
                 @Body request: RespondTransactionRequest
         ): Response<GeneralResponse>
