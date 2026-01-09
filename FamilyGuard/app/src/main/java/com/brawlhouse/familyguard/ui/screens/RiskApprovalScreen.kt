@@ -11,51 +11,50 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.brawlhouse.familyguard.viewmodel.MainViewModel
 
 @Composable
 fun RiskApprovalScreen(
-    viewModel: MainViewModel,
-    transactionId: Int, // รับ ID รายการที่จะอนุมัติ
-    riskScore: String,
-    reason: String
+        viewModel: MainViewModel,
+        transactionId: Int, // รับ ID รายการที่จะอนุมัติ
+        riskScore: String,
+        reason: String
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFFF0F0)) // พื้นหลังสีแดงอ่อน
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            modifier =
+                    Modifier.fillMaxSize()
+                            .background(Color(0xFFFFF0F0)) // พื้นหลังสีแดงอ่อน
+                            .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Warning,
-            contentDescription = null,
-            tint = Color.Red,
-            modifier = Modifier.size(80.dp)
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = Color.Red,
+                modifier = Modifier.size(80.dp)
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Text(
-            text = "🚨 เตือนภัยครอบครัว!",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Red
+                text = "🚨 เตือนภัยครอบครัว!",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Red
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            modifier = Modifier.fillMaxWidth()
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("คะแนนความเสี่ยง: $riskScore%", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 Text("สาเหตุความเสี่ยง:", fontWeight = FontWeight.Bold)
                 Text(reason, color = Color.Gray)
             }
@@ -65,23 +64,19 @@ fun RiskApprovalScreen(
 
         // ปุ่มระงับ (เด่นๆ)
         Button(
-            onClick = { viewModel.respondToRisk(transactionId, isApproved = false) },
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text("⛔ ระงับรายการ (BLOCK)", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
+                onClick = { viewModel.respondToRisk(transactionId, isAllowed = false) },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(12.dp)
+        ) { Text("⛔ ระงับรายการ (BLOCK)", fontSize = 18.sp, fontWeight = FontWeight.Bold) }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // ปุ่มอนุญาต (รองลงมา)
         OutlinedButton(
-            onClick = { viewModel.respondToRisk(transactionId, isApproved = true) },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text("อนุญาตให้ทำต่อ (ปลอดภัย)", color = Color.Gray)
-        }
+                onClick = { viewModel.respondToRisk(transactionId, isAllowed = true) },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(12.dp)
+        ) { Text("อนุญาตให้ทำต่อ (ปลอดภัย)", color = Color.Gray) }
     }
 }
