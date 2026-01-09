@@ -48,7 +48,7 @@ function calculateSimpleRisk(answers) {
 exports.analyze = async (req, res) => {
     try {
         const elderly_id = req.user.user_id;
-        const { answers, amount, destination } = req.body;
+        const answers = req.body;
 
         // Validation
         if (!answers || !Array.isArray(answers)) {
@@ -67,8 +67,6 @@ exports.analyze = async (req, res) => {
 
         const newTrans = await Transaction.create({
             user_id: elderly_id,
-            amount: amount || 0,
-            destination: destination || "Unknown",
             risk_score,
             status
         });

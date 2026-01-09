@@ -8,14 +8,6 @@ const Transaction = sequelize.define('Transaction', {
         primaryKey: true,
         autoIncrement: true
     },
-    amount: {
-        type: DataTypes.FLOAT,
-        allowNull: false
-    },
-    destination: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
     risk_score: {
         type: DataTypes.FLOAT,
         allowNull: true,
