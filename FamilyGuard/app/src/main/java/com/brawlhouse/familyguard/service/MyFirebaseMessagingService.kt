@@ -18,14 +18,27 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
+        android.util.Log.d("FCM_DEBUG", "From: ${remoteMessage.from}")
+        android.util.Log.d("FCM_DEBUG", "Data Payload: ${remoteMessage.data}")
+        remoteMessage.notification?.let {
+            android.util.Log.d("FCM_DEBUG", "Notification Body: ${it.body}")
+        }
+
         // ดึงข้อมูล Data Payload ที่ Backend ส่งมา
         val data = remoteMessage.data
         val title = remoteMessage.notification?.title ?: "Family Guard Alert"
         val body = remoteMessage.notification?.body ?: "มีการแจ้งเตือนความเสี่ยง"
 
-        // ถ้า Backend ส่งคำสั่ง risk_alert มา
-        if (data["action"] == "risk_alert") {
+        // ถ้า Backend ส่งคำสั่ง risk_alert มา (เช็คทั้ง action และ type) หรือมี Notification
+        // Payload
+        if (data["action"] == "risk_alert" ||
+                        data["type"] == "risk_alert" ||
+                        remoteMessage.notification != null
+        ) {
+            android.util.Log.d("FCM_DEBUG", "Condition met -> Showing Notification")
             showUrgentNotification(title, body, data)
+        } else {
+            android.util.Log.d("FCM_DEBUG", "Action mismatch: ${data["action"]} / ${data["type"]}")
         }
     }
 
@@ -35,43 +48,53 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val notificationId = System.currentTimeMillis().toInt()
 
         // เตรียม Intent เพื่อเปิดหน้า MainActivity
-        val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            // ยัดข้อมูลใส่ Intent เพื่อให้ MainActivity เปิดหน้าจอ Approve/Reject ถูกต้อง
-            putExtra("action", data["action"])
-            putExtra("transaction_id", data["transaction_id"])
-            putExtra("risk_score", data["risk_score"])
-            putExtra("reasons", data["reasons"])
-        }
+        val intent =
+                Intent(this, MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    // ยัดข้อมูลใส่ Intent เพื่อให้ MainActivity เปิดหน้าจอ Approve/Reject ถูกต้อง
+                    // รองรับทั้ง key "action" และ "type"
+                    putExtra("action", data["action"] ?: data["type"])
+                    putExtra("transaction_id", data["transaction_id"])
+                    putExtra("risk_score", data["risk_score"])
+                    putExtra("reasons", data["reasons"])
+                    putExtra("nickname", data["nickname"])
+                    putExtra("message", data["message"])
+                }
 
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val pendingIntent =
+                PendingIntent.getActivity(
+                        this,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+                )
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         // สร้าง Channel สำหรับ Android 8.0+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Fraud Alerts",
-                NotificationManager.IMPORTANCE_HIGH // สำคัญมาก: ต้องใช้ HIGH เพื่อให้เด้งและมีเสียง
-            ).apply {
-                enableVibration(true)
-            }
+            val channel =
+                    NotificationChannel(
+                                    channelId,
+                                    "Fraud Alerts",
+                                    NotificationManager.IMPORTANCE_HIGH // สำคัญมาก: ต้องใช้ HIGH
+                                    // เพื่อให้เด้งและมีเสียง
+                                    )
+                            .apply { enableVibration(true) }
             notificationManager.createNotificationChannel(channel)
         }
 
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher) // เปลี่ยนเป็น icon ตกใจได้ถ้ามี
-            .setContentTitle(title)
-            .setContentText(message)
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH) // เด้งทันที
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setContentIntent(pendingIntent)
-            .build()
+        val notification =
+                NotificationCompat.Builder(this, channelId)
+                        .setSmallIcon(R.mipmap.ic_launcher) // เปลี่ยนเป็น icon ตกใจได้ถ้ามี
+                        .setContentTitle(title)
+                        .setContentText(message)
+                        .setAutoCancel(true)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH) // เด้งทันที
+                        .setCategory(NotificationCompat.CATEGORY_ALARM)
+                        .setContentIntent(pendingIntent)
+                        .build()
 
         notificationManager.notify(notificationId, notification)
     }

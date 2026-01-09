@@ -1,26 +1,58 @@
 package com.brawlhouse.familyguard.viewmodel
+
+// หรือสร้างใหม่
+import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.brawlhouse.familyguard.data.*
 import com.brawlhouse.familyguard.ui.Screen
-import com.brawlhouse.familyguard.ui.screens.RiskType // ต้องมี enum RiskType ใน Screen.kt หรือสร้างใหม่
+import com.brawlhouse.familyguard.ui.screens.RiskType
 import com.google.firebase.messaging.FirebaseMessaging
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-import java.util.UUID
+class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-class MainViewModel : ViewModel() {
+    private val prefs = application.getSharedPreferences("family_guard_prefs", Context.MODE_PRIVATE)
+
+    private fun checkSession() {
+        try {
+            val token = prefs.getString("auth_token", null)
+            val userId = prefs.getInt("user_id", 0)
+
+            if (!token.isNullOrEmpty() && userId != 0) {
+                // Restore session
+                RetrofitClient.authToken = token
+                currentUserId = userId
+                _currentScreen.value = Screen.Dashboard
+
+                // Sync/Refresh data safely
+                loadFamilyData()
+                try {
+                    syncFcmToken()
+                } catch (e: Exception) {
+                    Log.e("MainViewModel", "FCM Sync failed during session restore", e)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Error restoring session", e)
+            // Do not clear prefs automatically to avoid loop if transient error
+        }
+    }
 
     // --- State สำหรับ Login ---
     var email by mutableStateOf("")
     var password by mutableStateOf("")
+
+    // ID สำหรับ Polling
+    var currentUserId by mutableStateOf(0)
 
     // --- State สำหรับ Register ---
     var regNickname by mutableStateOf("")
@@ -35,7 +67,7 @@ class MainViewModel : ViewModel() {
 
     var myInviteCode by mutableStateOf("")
     var joinCodeInput by mutableStateOf("")
-    
+
     // UI Control
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
@@ -47,24 +79,48 @@ class MainViewModel : ViewModel() {
     private val _showRiskDialog = MutableStateFlow(false)
     val showRiskDialog = _showRiskDialog.asStateFlow()
 
-    // --- Functions ---
-    fun onEmailChange(newVal: String) { email = newVal }
-    fun onPasswordChange(newVal: String) { password = newVal }
+    init {
+        checkSession()
+    }
 
-    fun onRegNicknameChange(v: String) { regNickname = v }
-    fun onRegEmailChange(v: String) { regEmail = v }
-    fun onRegPasswordChange(v: String) { regPassword = v }
-    fun onRegBankChange(v: String) { regBankAccount = v }
-    fun onRegRoleChange(v: String) { regRole = v }
-    
-    fun onJoinCodeChange(v: String) { joinCodeInput = v }
+    // --- Functions ---
+    fun onEmailChange(newVal: String) {
+        email = newVal
+    }
+    fun onPasswordChange(newVal: String) {
+        password = newVal
+    }
+
+    fun onRegNicknameChange(v: String) {
+        regNickname = v
+    }
+    fun onRegEmailChange(v: String) {
+        regEmail = v
+    }
+    fun onRegPasswordChange(v: String) {
+        regPassword = v
+    }
+    fun onRegBankChange(v: String) {
+        regBankAccount = v
+    }
+    fun onRegRoleChange(v: String) {
+        regRole = v
+    }
+
+    fun onJoinCodeChange(v: String) {
+        joinCodeInput = v
+    }
 
     fun navigateTo(screen: Screen) {
         _currentScreen.value = screen
     }
 
-    fun showRiskDialog() { _showRiskDialog.value = true }
-    fun dismissRiskDialog() { _showRiskDialog.value = false }
+    fun showRiskDialog() {
+        _showRiskDialog.value = true
+    }
+    fun dismissRiskDialog() {
+        _showRiskDialog.value = false
+    }
 
     // --- API: Login ---
     fun login() {
@@ -81,6 +137,17 @@ class MainViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val body = response.body()
                     RetrofitClient.authToken = body?.token
+                    currentUserId = body?.user?.userId ?: 0
+
+                    Log.d(
+                            "SESSION_DEBUG",
+                            "Login Success. Saving session -> UserID: $currentUserId"
+                    )
+                    // Save session
+                    prefs.edit()
+                            .putString("auth_token", body?.token)
+                            .putInt("user_id", currentUserId)
+                            .apply()
 
                     // [สำคัญ] ล็อกอินเสร็จ ต้องส่ง FCM Token ไปให้ Backend รู้จักเครื่องนี้
                     syncFcmToken()
@@ -109,14 +176,15 @@ class MainViewModel : ViewModel() {
             errorMessage = null
             try {
                 val dummyDeviceId = "android_" + UUID.randomUUID().toString().substring(0, 8)
-                val request = RegisterRequest(
-                    email = regEmail,
-                    password = regPassword,
-                    nickname = regNickname,
-                    role = regRole,
-                    deviceId = dummyDeviceId,
-                    bankAccountNumber = regBankAccount.ifBlank { "000-0-00000-0" }
-                )
+                val request =
+                        RegisterRequest(
+                                email = regEmail,
+                                password = regPassword,
+                                nickname = regNickname,
+                                role = regRole,
+                                deviceId = dummyDeviceId,
+                                bankAccountNumber = regBankAccount.ifBlank { "000-0-00000-0" }
+                        )
                 val response = RetrofitClient.instance.register(request)
                 if (response.isSuccessful) {
                     errorMessage = null
@@ -154,7 +222,7 @@ class MainViewModel : ViewModel() {
     }
 
     // --- API: Join Family ---
-    fun joinFamily() { 
+    fun joinFamily() {
         if (joinCodeInput.isBlank()) return
 
         viewModelScope.launch {
@@ -162,7 +230,7 @@ class MainViewModel : ViewModel() {
             try {
                 val response = RetrofitClient.instance.joinFamily(JoinFamilyRequest(joinCodeInput))
                 if (response.isSuccessful) {
-                    loadFamilyData() 
+                    loadFamilyData()
                     navigateTo(Screen.Dashboard)
                 } else {
                     errorMessage = "รหัสไม่ถูกต้อง หรือเข้าร่วมไม่ได้"
@@ -221,23 +289,23 @@ class MainViewModel : ViewModel() {
             isLoading = true
             try {
                 // แปลง Map จาก UI เป็น List ตามลำดับ
-                val answerList = listOf(
-                    answersMap["q1"].toString(), // Who
-                    answersMap["q2"].toString(), // Relationship
-                    answersMap["q3"].toString(), // Profession
-                    answersMap["q4"].toString(), // Action
-                    answersMap["q5"].toString()  // Urgency
-                )
+                val answerList =
+                        listOf(
+                                answersMap["q1"].toString(), // Who
+                                answersMap["q2"].toString(), // Relationship
+                                answersMap["q3"].toString(), // Profession
+                                answersMap["q4"].toString(), // Action
+                                answersMap["q5"].toString() // Urgency
+                        )
 
-                // สร้าง Request (Mock จำนวนเงินไปก่อน)
-                val request = AnalyzeRequest(
-                    answers = answerList,
-                    amount = 0.0,
-                    destination = "Unknown"
-                )
+                // สร้าง Request
+                val request = AnalyzeRequest(answers = answerList)
 
                 // ยิงไป Backend
                 val response = RetrofitClient.instance.analyzeRisk(request)
+
+                Log.d("SURVEY_RES", "Status Code: ${response.code()}")
+                Log.d("SURVEY_RES", "Response Body: ${response.body()}")
 
                 if (response.isSuccessful) {
                     val body = response.body()
@@ -247,14 +315,17 @@ class MainViewModel : ViewModel() {
                     // เปลี่ยนหน้าตามความเสี่ยง
                     if (riskScore >= 80) {
                         // Backend จะเป็นคนส่ง FCM ให้ครอบครัวเอง เราแค่เปลี่ยนหน้า
-                        navigateTo(Screen.RiskResult(RiskType.HighRisk))
+                        navigateTo(Screen.RiskResult(RiskType.ApprovalRequired))
                     } else {
                         navigateTo(Screen.RiskResult(RiskType.LowRisk))
                     }
                 } else {
+                    Log.e("SURVEY_RES", "Error Code: ${response.code()}")
+                    Log.e("SURVEY_RES", "Error Body: ${response.errorBody()?.string()}")
                     errorMessage = "ส่งข้อมูลไม่สำเร็จ: ${response.code()}"
                 }
             } catch (e: Exception) {
+                Log.e("SURVEY_RES", "Exception: ${e.message}", e)
                 errorMessage = "Network Error: ${e.message}"
             } finally {
                 isLoading = false
@@ -264,41 +335,76 @@ class MainViewModel : ViewModel() {
 
     // 2. ดึง FCM Token แล้วส่งไปอัปเดตที่ Backend
     fun syncFcmToken() {
-    FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-        if (!task.isSuccessful) {
-            Log.e("FCM_TEST", "Fetching FCM token failed", task.exception)
-            return@addOnCompleteListener
-        }
-        val token = task.result
-        Log.d("FCM_TEST", "=== ได้ FCM Token แล้ว ===")
-        Log.d("FCM_TEST", token)  // ← Token ยาว ๆ จะโผล่ตรงนี้
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.e("FCM_TEST", "Fetching FCM token failed", task.exception)
+                return@addOnCompleteListener
+            }
+            val token = task.result
+            Log.d("FCM_TEST", "=== ได้ FCM Token แล้ว ===")
+            Log.d("FCM_TEST", token) // ← Token ยาว ๆ จะโผล่ตรงนี้
 
-        viewModelScope.launch {
-            try {
-                RetrofitClient.instance.updateFcmToken(UpdateTokenRequest(token))
-                Log.d("FCM_TEST", "ส่ง FCM Token ไป Backend สำเร็จ")
-            } catch (e: Exception) {
-                Log.e("FCM_TEST", "ส่ง Token ไป Backend ล้มเหลว", e)
+            viewModelScope.launch {
+                try {
+                    RetrofitClient.instance.updateFcmToken(UpdateTokenRequest(token))
+                    Log.d("FCM_TEST", "ส่ง FCM Token ไป Backend สำเร็จ")
+                } catch (e: Exception) {
+                    Log.e("FCM_TEST", "ส่ง Token ไป Backend ล้มเหลว", e)
+                }
             }
         }
     }
-}
-    fun respondToRisk(transactionId: Int, isApproved: Boolean) {
+    // --- Active Risk Alert Data ---
+    var activeRiskTransactionId by mutableStateOf(0)
+    var activeRiskNickname by mutableStateOf("")
+    var activeRiskMessages by mutableStateOf<List<String>>(emptyList())
+
+    fun setRiskData(txId: Int, nickname: String, rawMessage: String) {
+        activeRiskTransactionId = txId
+        activeRiskNickname = nickname
+        try {
+            // Simple manual parsing [ "a", "b" ] or use Gson if available
+            // สมมติว่าเป็น JSON Array String
+            val cleaned = rawMessage.trim().removePrefix("[").removeSuffix("]")
+            if (cleaned.isBlank()) {
+                activeRiskMessages = emptyList()
+            } else {
+                // Split by comma, then remove quotes
+                activeRiskMessages =
+                        cleaned.split(",").map {
+                            it.trim().removeSurrounding("\"").removeSurrounding("'")
+                        }
+            }
+        } catch (e: Exception) {
+            activeRiskMessages = listOf(rawMessage)
+        }
+        _showRiskDialog.value = true
+    }
+
+    fun respondToRisk(transactionId: Int, isAllowed: Boolean) {
         viewModelScope.launch {
             isLoading = true
             try {
-                val action = if (isApproved) "approve" else "reject"
+                val action = if (isAllowed) "allow" else "reject"
                 val request = RespondTransactionRequest(transactionId, action)
-                
+
+                Log.d("RISK_RESPONSE", "Sending Respond Request: ID=$transactionId, Action=$action")
+
                 val response = RetrofitClient.instance.respondToTransaction(request)
-                
+
+                Log.d("RISK_RESPONSE", "Response Code: ${response.code()}")
+
                 if (response.isSuccessful) {
-                    // ทำรายการสำเร็จ -> กลับหน้า Dashboard
-                    navigateTo(Screen.Dashboard)
+                    Log.d("RISK_RESPONSE", "Success: ${response.body()}")
+                    // ทำรายการสำเร็จ -> ปิด Dialog / กลับหน้า Dashboard
+                    _showRiskDialog.value = false
                 } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("RISK_RESPONSE", "Failed Code: ${response.code()}, Body: $errorBody")
                     errorMessage = "Failed: ${response.code()}"
                 }
             } catch (e: Exception) {
+                Log.e("RISK_RESPONSE", "Exception: ${e.message}", e)
                 errorMessage = e.message
             } finally {
                 isLoading = false
@@ -320,9 +426,41 @@ class MainViewModel : ViewModel() {
         _familyMembers.value = emptyList()
         errorMessage = null
         isLoading = false
-        
-        RetrofitClient.authToken = null 
+
+        // Clear session
+        prefs.edit().clear().apply()
+        RetrofitClient.authToken = null
 
         navigateTo(Screen.Login)
+    }
+
+    // --- API: Get User Status for Polling ---
+    fun checkUserStatus() {
+        viewModelScope.launch {
+            try {
+                // สมมติว่า userId ถูกเก็บไว้ใน SharedPreferences หรือตัวแปร global
+                // แต่ในโค้ดปัจจุบันเรายังไม่มีที่เก็บ userId ที่ชัดเจนหลัง login
+                // ดังนั้นเราจะใช้ UserData จาก Token หรือ Response ตอน Login ถ้ามีการเก็บไว้
+                // เพื่อความง่าย ผมจะ hardcode หรือดึงจาก familyMembers ถ้ามี
+                // หรือวิธีที่ดีคือ เก็บ userId ไว้ใน ViewModel ตอน Login สำเร็จ
+                // แต่ตอนนี้ขอสมมติว่าเรามี userId เก็บไว้แล้ว หรือส่งมา
+
+                // เพื่อให้โค้ดทำงานได้จริง เราต้องเก็บ userId ตอน login
+                // ผมจะเพิ่ม userId var ใน viewModel นี้แหละครับ
+                if (currentUserId == 0) return@launch
+
+                val response = RetrofitClient.instance.getUserStatus(currentUserId)
+                if (response.isSuccessful) {
+                    val status = response.body()?.status
+                    if (status == "allow") {
+                        navigateTo(Screen.RiskResult(RiskType.LowRisk))
+                    } else if (status == "reject") {
+                        navigateTo(Screen.RiskResult(RiskType.HighRisk))
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("POLLING", "Error: ${e.message}")
+            }
+        }
     }
 }
