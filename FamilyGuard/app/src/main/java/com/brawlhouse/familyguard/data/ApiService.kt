@@ -44,8 +44,8 @@ data class RegisterResponse(
 
 // Request ส่งข้อความไป
 data class AnalyzeTextRequest(
-    // บังคับให้ส่ง JSON key เป็น "input" แม้ตัวแปรจะชื่อ text
-    @SerializedName("input") val text: String 
+    // เปลี่ยนเป็น "text" ให้ตรงกับที่ Backend (Node.js) รอรับ
+    @SerializedName("text") val text: String 
 )
 
 // Response ที่รับจาก AI (ตรงกับ JSON ที่ Backend ส่งมา)

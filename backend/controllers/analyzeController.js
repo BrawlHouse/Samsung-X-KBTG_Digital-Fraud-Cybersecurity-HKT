@@ -7,7 +7,8 @@ const openai = new OpenAI({
 
 exports.analyzeMessage = async (req, res) => {
   try {
-    const { input } = req.body;
+    const { text } = req.body;
+    const input = text;
 
     // 1. Validate Input
     if (!input || typeof input !== 'string') {
@@ -28,9 +29,9 @@ exports.analyzeMessage = async (req, res) => {
       }
 
       Criteria:
-      - High: Links to weird URLs, asking for money/transfer, claiming urgent bank issues.
+      - High: Links to weird URLs (bit.ly without context), asking for money/transfer, claiming urgent bank issues/police/post office.
       - Medium: Vague promises, job offers via SMS, unknown sender claiming to know you.
-      - Low: OTPs requested by user, normal shipping updates, known contacts.
+      - Low: OTPs requested by user, normal shipping updates, known contacts, normal conversation.
     `;
 
     // 3. เรียก AI (ในที่นี้ใช้ GPT-3.5-turbo หรือ GPT-4o-mini เพื่อความประหยัดและเร็ว)
@@ -50,11 +51,18 @@ exports.analyzeMessage = async (req, res) => {
     return res.json({
       percentage: aiResponse.percentage,
       level: aiResponse.level,
-      reason: aiResponse.reason // แถมเหตุผลให้ Frontend ไปโชว์ได้ด้วย
+      reason: aiResponse.reason ,// แถมเหตุผลให้ Frontend ไปโชว์ได้ด้วย
+      is_risk: aiResponse.percentage >= 50
     });
 
   } catch (error) {
     console.error('AI Analysis Error:', error);
-    return res.status(500).json({ error: 'Failed to analyze message' });
+    // กรณี AI พัง หรือเน็ตหลุด ให้ Return แบบ default ไปก่อนเพื่อไม่ให้แอปค้าง
+    return res.status(500).json({ 
+        risk_score: 0, 
+        level: "unknown", 
+        reasons: "AI Service Error",
+        is_risk: false
+    });
   }
 };
