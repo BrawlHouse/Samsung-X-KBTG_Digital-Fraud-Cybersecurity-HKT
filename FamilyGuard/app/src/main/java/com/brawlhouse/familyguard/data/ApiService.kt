@@ -41,6 +41,20 @@ data class RegisterResponse(
         val error: String?
 )
 
+
+// Request ส่งข้อความไป
+data class AnalyzeTextRequest(
+    // บังคับให้ส่ง JSON key เป็น "input" แม้ตัวแปรจะชื่อ text
+    @SerializedName("input") val text: String 
+)
+
+// Response ที่รับจาก AI (ตรงกับ JSON ที่ Backend ส่งมา)
+data class AnalyzeTextResponse(
+    val percentage: Int,                    // เปลี่ยนจาก risk_score
+    val level: String,
+    val reason: String,                     // เปลี่ยนจาก reasons (singular)
+    @SerializedName("is_risk") val isRisk: Boolean
+)
 // --- Interface ---
 interface ApiService {
     @POST("users/login") suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
@@ -68,4 +82,8 @@ interface ApiService {
     // อัปเดต FCM Token เพื่อให้ Backend รู้ว่าเครื่องไหนคือใคร
     @POST("users/fcm-token")
     suspend fun updateFcmToken(@Body request: UpdateTokenRequest): Response<GeneralResponse>
+    
+
+    @POST("analyze/message")  // เปลี่ยนจาก risk/message เป็น analyze/message
+    suspend fun analyzeText(@Body request: AnalyzeTextRequest): Response<AnalyzeTextResponse>
 }

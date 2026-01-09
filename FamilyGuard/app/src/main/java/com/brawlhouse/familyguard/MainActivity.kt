@@ -10,6 +10,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import android.provider.Settings
+import android.net.Uri
+// import android.content.Intent // ลบ import ซ้ำออก
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -41,11 +44,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        
+        // 1. เช็คและขอ Notification Permission
         askNotificationPermission()
+        
+        // 2. เช็คและขอสิทธิ์ Draw Overlays (Popup)
+        checkOverlayPermission() 
+
         enableEdgeToEdge()
 
         setContent {
+            // ... (Content เดิมของคุณ) ...
             FamilyGuardTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -143,8 +152,21 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-    super.onNewIntent(intent)
-    setIntent(intent)
-}
+    override fun onNewIntent(intent: Intent) { // แก้ไข onNewIntent ให้ถูกต้อง (ลบเครื่องหมาย ? ออกถ้า override ผิด)
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
+    // ฟังก์ชันตรวจสอบสิทธิ์ Overlay
+    private fun checkOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivity(intent)
+            }
+        }
+    }
 }

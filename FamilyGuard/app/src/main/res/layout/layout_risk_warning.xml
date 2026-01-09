@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    app:cardBackgroundColor="#FFF0F0"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvWarningTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚠️ Warning"
+            android:textColor="#D32F2F"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvWarningDetails"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Details..."
+            android:textColor="#000000" />
+
+        <Button
+            android:id="@+id/btnCloseWarning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="#D32F2F"
+            android:text="ปิด"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
