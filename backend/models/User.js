@@ -44,6 +44,19 @@ const User = sequelize.define('User', {
     family_id: {
         type: DataTypes.INTEGER,
         allowNull: true
+    },
+    status: {
+        type: DataTypes.ENUM('allow', 'reject', 'waiting', 'normal'),
+        allowNull: false,
+        defaultValue: 'normal',
+        validate: {
+            // Validator: เช็กระดับ Database ว่าถ้าเป็น child ห้ามเป็นสถานะอื่น
+            checkChildStatus(value) {
+                if (this.role === 'child' && value !== 'normal') {
+                    throw new Error("User with role 'child' must always have 'normal' status.");
+                }
+            }
+        }
     }
 });
 

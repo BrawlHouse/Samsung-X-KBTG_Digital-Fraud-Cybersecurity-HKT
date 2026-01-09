@@ -8,21 +8,13 @@ const Transaction = sequelize.define('Transaction', {
         primaryKey: true,
         autoIncrement: true
     },
-    amount: {
-        type: DataTypes.FLOAT,
-        allowNull: false
-    },
-    destination: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
     risk_score: {
         type: DataTypes.FLOAT,
         allowNull: true,
         defaultValue: 0
     },
     status: {
-        type: DataTypes.ENUM('normal', 'pending_approval', 'approved', 'rejected'),
+        type: DataTypes.ENUM('normal', 'waiting', 'allow', 'reject'),
         allowNull: true,
         defaultValue: 'normal'
     },

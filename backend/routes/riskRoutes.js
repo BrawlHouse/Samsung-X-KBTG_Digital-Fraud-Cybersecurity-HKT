@@ -11,14 +11,19 @@ router.use(authMiddleware);
  * @swagger
  * tags:
  *   - name: Risk
- *     description: ระบบจัดการความเสี่ยงและบันทึกธุรกรรม
+ *     description: ระบบวิเคราะห์ความเสี่ยงและการอนุมัติธุรกรรมของผู้สูงอายุ
  */
 
 /**
  * @swagger
  * /risk/analyze:
  *   post:
- *     summary: วิเคราะห์ความเสี่ยงจากคำตอบและบันทึกธุรกรรม
+ *     summary: วิเคราะห์ความเสี่ยงของธุรกรรม (เรียกโดยผู้สูงอายุ)
+ *     description: |
+ *       วิเคราะห์ความเสี่ยงจากคำตอบ (answers)
+ *       - ระบบจะคำนวณ risk_score (0-100)
+ *       - หาก risk_score >= 80 → สร้าง Transaction สถานะ `waiting`
+ *       - แจ้งเตือนสมาชิกในครอบครัวผ่าน FCM
  *     tags: [Risk]
  *     security:
  *       - bearerAuth: []
@@ -30,23 +35,29 @@ router.use(authMiddleware);
  *             type: object
  *             required:
  *               - answers
- *               - amount
- *               - destination
  *             properties:
  *               answers:
  *                 type: array
+ *                 description: คำตอบ 5 ข้อ (Who, Relationship, Profession, Action, Urgency)
  *                 items:
  *                   type: string
- *                 example: ["ไม่รู้", "ไม่รู้จัก", "ตำรวจ", "ให้โอนเงิน", "ด่วน"]
+ *                 example:
+ *                   - "โทรมา"
+ *                   - "ไม่รู้จัก"
+ *                   - "ตำรวจ"
+ *                   - "ให้โอนเงิน"
+ *                   - "ข่มขู่"
  *               amount:
  *                 type: number
- *                 example: 5000
+ *                 description: จำนวนเงิน (ถ้ามี)
+ *                 example: 50000
  *               destination:
  *                 type: string
- *                 example: "123-456-7890"
+ *                 description: ปลายทางการโอน
+ *                 example: "บัญชีธนาคาร XXX"
  *     responses:
  *       201:
- *         description: วิเคราะห์และบันทึกสำเร็จ
+ *         description: วิเคราะห์สำเร็จ
  *         content:
  *           application/json:
  *             schema:
@@ -54,32 +65,48 @@ router.use(authMiddleware);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Transaction processed and risk analyzed
- *                 risk_score:
- *                   type: integer
- *                   example: 85
- *                 risk_level:
- *                   type: string
- *                   enum: [LOW, MEDIUM, HIGH]
- *                   example: HIGH
- *                 status:
- *                   type: string
- *                   enum: [normal, pending_approval, approved, rejected]
- *                   example: pending_approval
+ *                   example: Analysis complete
+ *                 ai_result:
+ *                   type: object
+ *                   properties:
+ *                     risk_score:
+ *                       type: number
+ *                       example: 90
+ *                     level:
+ *                       type: string
+ *                       enum: [LOW, HIGH]
+ *                       example: HIGH
+ *                     reasons:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example:
+ *                         - ติดต่อจากคนไม่รู้จัก
+ *                         - มีการแอบอ้างเป็นตำรวจ
  *                 transaction:
  *                   type: object
  *                   properties:
  *                     transaction_id:
  *                       type: integer
- *                       example: 10
+ *                       example: 15
+ *                     user_id:
+ *                       type: integer
+ *                       example: 3
  *                     amount:
  *                       type: number
- *                       example: 5000
+ *                       example: 50000
  *                     destination:
  *                       type: string
- *                       example: "123-456-7890"
+ *                       example: "บัญชีธนาคาร XXX"
+ *                     risk_score:
+ *                       type: number
+ *                       example: 90
+ *                     status:
+ *                       type: string
+ *                       enum: [normal, waiting]
+ *                       example: waiting
  *       400:
- *         description: ข้อมูลไม่ครบหรือไม่ถูกต้อง
+ *         description: Input ไม่ถูกต้อง
  *         content:
  *           application/json:
  *             schema:
@@ -87,9 +114,9 @@ router.use(authMiddleware);
  *               properties:
  *                 error:
  *                   type: string
- *                   example: Please provide answers, amount, and destination
+ *                   example: Invalid answers format
  *       500:
- *         description: Server Error
+ *         description: Server error
  *         content:
  *           application/json:
  *             schema:
@@ -97,18 +124,23 @@ router.use(authMiddleware);
  *               properties:
  *                 error:
  *                   type: string
- *                   example: Internal Server Error
+ *                   example: Server error
  */
-// Route สำหรับวิเคราะห์ความเสี่ยง (พ่อแม่ส่ง Survey)
-router.post('/analyze', authMiddleware, riskController.analyze);
 
 
+router.post('/analyze', riskController.analyze);
 
 /**
  * @swagger
  * /risk/respond:
  *   post:
- *     summary: ลูกหลานกดยอมรับ/ไม่ยอมรับให้ธุรกรรมพ่อแม่ (Approve/Reject)
+ *     summary: ลูกหลานตอบกลับธุรกรรม (Approve / Reject)
+ *     description: |
+ *       ใช้สำหรับสมาชิกครอบครัวกดยืนยันธุรกรรม
+ *       - ใช้ Database Transaction + Lock ป้องกัน race condition
+ *       - เปลี่ยนสถานะ Transaction
+ *       - เปลี่ยนสถานะ User
+ *       - ส่ง Notification ให้ทุกฝ่าย
  *     tags: [Risk]
  *     security:
  *       - bearerAuth: []
@@ -124,14 +156,14 @@ router.post('/analyze', authMiddleware, riskController.analyze);
  *             properties:
  *               transaction_id:
  *                 type: integer
- *                 example: 10
+ *                 example: 15
  *               action:
  *                 type: string
  *                 enum: [approve, reject]
  *                 example: approve
  *     responses:
  *       200:
- *         description: อัปเดตสถานะสำเร็จ
+ *         description: อัปเดตสถานะธุรกรรมสำเร็จ
  *         content:
  *           application/json:
  *             schema:
@@ -139,19 +171,19 @@ router.post('/analyze', authMiddleware, riskController.analyze);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Transaction 10 approved successfully
+ *                   example: Transaction approve successfully
  *                 transaction:
  *                   type: object
  *                   properties:
  *                     transaction_id:
  *                       type: integer
- *                       example: 10
+ *                       example: 15
  *                     status:
  *                       type: string
- *                       enum: [normal, pending_approval, approved, rejected]
- *                       example: approved
- *       403:
- *         description: ไม่มีสิทธิ์อนุมัติ (คนละบ้าน)
+ *                       enum: [allow, rejected]
+ *                       example: allow
+ *       400:
+ *         description: Action ไม่ถูกต้อง
  *         content:
  *           application/json:
  *             schema:
@@ -159,7 +191,7 @@ router.post('/analyze', authMiddleware, riskController.analyze);
  *               properties:
  *                 error:
  *                   type: string
- *                   example: You do not have permission to approve this transaction
+ *                   example: Action must be approve or reject
  *       404:
  *         description: ไม่พบ Transaction
  *         content:
@@ -170,10 +202,31 @@ router.post('/analyze', authMiddleware, riskController.analyze);
  *                 error:
  *                   type: string
  *                   example: Transaction not found
+ *       409:
+ *         description: รายการถูกจัดการไปแล้ว
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: รายการนี้ถูกจัดการไปแล้วโดยสมาชิกอื่น
+ *                 current_status:
+ *                   type: string
+ *                   example: allow
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Server error
  */
-// Route สำหรับลูกตอบกลับ (Approve/Reject)
-// ต้องแน่ใจว่า riskController มี function ชื่อ respondToTransaction
-router.post('/respond', authMiddleware, riskController.respondToTransaction);
+router.post('/respond', riskController.respondToTransaction);
 
 
 module.exports = router;

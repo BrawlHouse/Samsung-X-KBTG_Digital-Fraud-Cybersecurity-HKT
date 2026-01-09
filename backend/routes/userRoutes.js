@@ -78,6 +78,9 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                     role:
  *                       type: string
  *                       example: parent
+ *                     status:
+ *                       type: string
+ *                       example: normal
  *       400:
  *         description: ข้อมูลไม่ครบ หรือ อีเมลซ้ำ
  *         content:
@@ -104,6 +107,11 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                 details:
  *                   type: string
  */
+
+
+router.post('/register', userController.register)
+
+
 
 /**
  * @swagger
@@ -167,6 +175,9 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                     bank_account_number:
  *                       type: string
  *                       example: 123-4-56789-0
+ *                     status:
+ *                       type: string
+ *                       example: normal
  *       401:
  *         description: อีเมลหรือรหัสผ่านไม่ถูกต้อง
  *         content:
@@ -188,6 +199,10 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                   type: string
  *                   example: Login failed
  */
+
+router.post('/login', userController.login);
+
+
 
 /**
  * @swagger
@@ -226,6 +241,11 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *       404:
  *         description: User not found
  */
+
+// Update FCM Token (Require Login) --> ต้องเอาไว้ก่อน /:user_id เพื่อกันสับสน
+router.post('/fcm-token', authMiddleware, userController.updateFcmToken);
+
+
 
 /**
  * @swagger
@@ -280,6 +300,9 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                 updatedAt:
  *                   type: string
  *                   format: date-time
+ *                 status:
+ *                   type: string
+ *                   example: normal
  *       404:
  *         description: ไม่พบผู้ใช้งาน
  *         content:
@@ -324,18 +347,112 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                   example: User not found
  */
 
+router.get('/:user_id', authMiddleware , userController.getUserInfo);
+router.delete('/:user_id', authMiddleware,  userController.deleteUser);
 
 
+/**
+ * @swagger
+ * /users/status:
+ *   put:
+ *     summary: Update user status
+ *     description: >
+ *       ใช้สำหรับเปลี่ยนสถานะของผู้ใช้  
+ *       - สถานะที่อนุญาต: allow, reject, waiting, normal  
+ *       - ผู้ใช้ที่มี role = child จะถูกบังคับให้เป็น status = normal เท่านั้น
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user_id
+ *               - status
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 example: 5
+ *               status:
+ *                 type: string
+ *                 enum: [allow, reject, waiting, normal]
+ *                 example: allow
+ *     responses:
+ *       200:
+ *         description: Status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Status updated successfully
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     user_id:
+ *                       type: integer
+ *                       example: 5
+ *                     nickname:
+ *                       type: string
+ *                       example: เด็กชายสมชาย
+ *                     role:
+ *                       type: string
+ *                       example: parent
+ *                     status:
+ *                       type: string
+ *                       example: allow
+ *
+ *       400:
+ *         description: Invalid input or invalid status value
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid status value
+ *
+ *       403:
+ *         description: Forbidden - Cannot change child user status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Cannot change status of a 'child' user. They must remain 'normal'.
+ *
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: User not found
+ *
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal Server Error
+ */
 
-router.post('/register', userController.register)
-router.post('/login', userController.login);
 
-// Update FCM Token (Require Login) --> ต้องเอาไว้ก่อน /:user_id เพื่อกันสับสน
-router.post('/fcm-token', authMiddleware, userController.updateFcmToken);
-
-// Get Info & Delete (Public or Protected depending on logic)
-router.get('/:user_id', userController.getUserInfo);
-router.delete('/:user_id', userController.deleteUser);
-
+router.put('/status', authMiddleware, userController.updateUserStatus);
 
 module.exports = router;
