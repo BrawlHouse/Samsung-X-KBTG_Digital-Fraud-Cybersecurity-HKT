@@ -3,7 +3,6 @@ const router = express.Router();
 const familyController = require('../controllers/familyController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-router.use(authMiddleware);
 
 
 /**

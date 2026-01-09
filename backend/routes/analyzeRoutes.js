@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const analyzeController = require('../controllers/analyzeController');
-const verifyToken = require('../middlewares/authMiddleware');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -86,6 +86,6 @@ const verifyToken = require('../middlewares/authMiddleware');
 
 
 // POST /analyze/message
-router.post('/message', verifyToken, analyzeController.analyzeMessage);
+router.post('/message', authMiddleware, analyzeController.analyzeMessage);
 
 module.exports = router;

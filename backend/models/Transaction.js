@@ -22,7 +22,7 @@ const Transaction = sequelize.define('Transaction', {
         defaultValue: 0
     },
     status: {
-        type: DataTypes.ENUM('normal', 'pending_approval', 'approved', 'rejected'),
+        type: DataTypes.ENUM('normal', 'waiting', 'allow', 'rejected'),
         allowNull: true,
         defaultValue: 'normal'
     },
