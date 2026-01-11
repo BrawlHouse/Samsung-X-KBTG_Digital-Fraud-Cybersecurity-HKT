@@ -9,6 +9,8 @@
 **FamilyGuard** is a family-centric fraud prevention platform designed to protect vulnerable users—especially the elderly—from modern digital scams such as call-center fraud, phishing messages, and coerced financial transactions.
 
 Developed for the **Samsung × KBTG Digital Fraud & Cybersecurity Hackathon**, FamilyGuard addresses a critical gap left by traditional security solutions: **social engineering attacks that succeed after the first line of defense fails**.
+### Try Demo
+https://youtu.be/OOidoVcrNNA?si=-E7sT6RWxrti3kuU
 
 ---
 
